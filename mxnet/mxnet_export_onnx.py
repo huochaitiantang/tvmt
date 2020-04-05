@@ -87,8 +87,8 @@ def convert_sym_params_to_onnx(model_name, path_sym_params, path_onnx):
 
 def main():
     model_names = [
-        #'resnet18_v1',
-        #'resnet50_v2',
+        'resnet18_v1',
+        'resnet50_v2',
         'mobilenetv2_1.0',
         'mobilenet1.0',
         'inceptionv3',
