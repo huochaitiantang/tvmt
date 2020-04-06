@@ -88,7 +88,7 @@ def convert_sym_params_to_onnx(model_name, path_sym_params, path_onnx):
     onnx_file = path_onnx+'/'+model_name+'.onnx'
     # Invoke export model API. It returns path of the converted onnx model
     converted_model_path = onnx_mxnet.export_model(
-        sym, params, [input_shape], np.float32, onnx_file)
+        sym, params, [input_shape], np.float32, onnx_file, verbose=True)
 
 
 def main():
@@ -100,13 +100,16 @@ def main():
         'inceptionv3',
         'densenet121'
     ]
+    this_file_path = os.path.dirname(__file__)
+    tvmt_path = os.path.join(this_file_path, os.path.pardir)
+    path_onnx = os.path.join(tvmt_path, 'onnx')
+    os.makedirs(path_onnx, exist_ok=True)
 
     for model_name in model_names:
         print("model name : "+model_name)
         block = get_model(model_name, pretrained=True)
-        path_sym_params = './symbol_and_params'
+        path_sym_params = os.path.join(this_file_path, './symbol_and_params')
         save_models(block, model_name, path_sym_params)
-        path_onnx = '../onnx'
         convert_sym_params_to_onnx(model_name, path_sym_params, path_onnx)
 
 
