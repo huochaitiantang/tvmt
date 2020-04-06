@@ -40,6 +40,7 @@ import mxnet as mx
 import tvm
 import tvm.relay as relay
 import numpy as np
+import os
 
 ######################################################################
 # Download Resnet18 model from Gluon Model Zoo
@@ -57,6 +58,8 @@ from mxnet.contrib import onnx as onnx_mxnet
 # ----------------------------------------
 # MXNet often use `arg_params` and `aux_params` to store network parameters
 # separately, here we show how to use these weights with existing API
+
+
 def block2symbol(block):
     data = mx.sym.Variable('data')
     sym = block(data)
@@ -66,23 +69,26 @@ def block2symbol(block):
         args[k] = mx.nd.array(v.data().asnumpy())
     return sym, args, auxs
 
+
 def save_models(block, model_name, path):
     mx_sym, args, auxs = block2symbol(block)
     # usually we would save/load it as checkpoint
+    os.makedirs(path, exist_ok=True)
     mx.model.save_checkpoint(path+"/"+model_name, 0, mx_sym, args, auxs)
     # there are 'xx.params' and 'xx-symbol.json' on disk
 
 
 def convert_sym_params_to_onnx(model_name, path_sym_params, path_onnx):
     img_size = 299 if model_name == 'inceptionv3' else 224
-    input_shape = (1,3,img_size,img_size)
+    input_shape = (1, 3, img_size, img_size)
     # symbol and params
     sym = path_sym_params + '/' + model_name + '-symbol.json'
-    params =  path_sym_params + '/' + model_name + '-0000.params'
+    params = path_sym_params + '/' + model_name + '-0000.params'
     # Path of the output file
     onnx_file = path_onnx+'/'+model_name+'.onnx'
     # Invoke export model API. It returns path of the converted onnx model
-    converted_model_path = onnx_mxnet.export_model(sym, params, [input_shape], np.float32, onnx_file)
+    converted_model_path = onnx_mxnet.export_model(
+        sym, params, [input_shape], np.float32, onnx_file)
 
 
 def main():
@@ -93,7 +99,7 @@ def main():
         'mobilenet1.0',
         'inceptionv3',
         'densenet121'
-        ]
+    ]
 
     for model_name in model_names:
         print("model name : "+model_name)
@@ -104,7 +110,7 @@ def main():
         convert_sym_params_to_onnx(model_name, path_sym_params, path_onnx)
 
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
     main()
 
 

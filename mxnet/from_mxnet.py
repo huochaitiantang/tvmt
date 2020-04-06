@@ -62,12 +62,14 @@ synset_path = download_testdata(synset_url, synset_name, module='data')
 with open(synset_path) as f:
     synset = eval(f.read())
 
+
 def transform_image(image):
     image = np.array(image) - np.array([123., 117., 104.])
     image /= np.array([58.395, 57.12, 57.375])
     image = image.transpose((2, 0, 1))
     image = image[np.newaxis, :]
     return image
+
 
 def trans_image(model_name):
     img_size = 299 if model_name == 'inceptionv3' else 224
@@ -90,15 +92,16 @@ def test_relay(block, x):
     mod, params = relay.frontend.from_mxnet(block, shape_dict)
     ## we want a probability so add a softmax operator
     func = mod["main"]
-    func = relay.Function(func.params, relay.nn.softmax(func.body), None, func.type_params, func.attrs)
-    
+    func = relay.Function(func.params, relay.nn.softmax(
+        func.body), None, func.type_params, func.attrs)
+
     ######################################################################
     # now compile the graph
     #target = 'cuda'
     target = 'llvm'
     with relay.build_config(opt_level=3):
         graph, lib, params = relay.build(func, target, params=params)
-    
+
     ######################################################################
     # Execute the portable graph on TVM
     # ---------------------------------
@@ -118,6 +121,7 @@ def test_relay(block, x):
     top1 = np.argmax(tvm_output.asnumpy()[0])
     print('TVM prediction top-1:', top1, synset[top1])
 
+
 def main():
     model_names = [
         'resnet18_v1',
@@ -126,7 +130,7 @@ def main():
         'mobilenet1.0',
         'inceptionv3',
         'densenet121'
-        ]
+    ]
 
     for model_name in model_names:
         print("model name : "+model_name)
@@ -135,11 +139,8 @@ def main():
         test_relay(block, x)
 
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
     main()
-
-
-
 
 
 ######################################################################
