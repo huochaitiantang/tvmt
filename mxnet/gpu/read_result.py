@@ -1,6 +1,8 @@
+import sys
+
 if __name__ == '__main__':
     model_runtime = {}
-    with open('result', 'r') as f:
+    with open(sys.argv[1], 'r') as f:
         lines = f.readlines()
         model = ''
         for line in lines:
@@ -10,3 +12,4 @@ if __name__ == '__main__':
                 model_runtime[model] = line.replace(' ', '').replace('-', '')[len('Total_time'):-1]
     for key, value in model_runtime.items():
         print(key, value)
+

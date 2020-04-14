@@ -73,15 +73,43 @@ import argparse
 config = {
     'model_names_file':'model_names.json',
     'exec_time_info':'./log/tuning_exec_info',
+    'n_trial': 200,
+    'early_stopping': 60,
+    'tuner': 'xgb'
+}
+
+tuning_option = {
+        'log_filename': "",
+
+        'tuner': 'xgb',
+        'n_trial': 200,
+        'early_stopping': 60,
+
+        'measure_option': autotvm.measure_option(
+        builder=autotvm.LocalBuilder(timeout=10),
+        #runner=autotvm.LocalRunner(number=20, repeat=3, timeout=4, min_repeat_ms=150),
+        runner=autotvm.RPCRunner(
+            'V100_0',  # change the device key to your key
+            '0.0.0.0', 9190,
+            number=20, repeat=3, timeout=4, min_repeat_ms=150)
+        ),
 }
 
 parser = argparse.ArgumentParser()
 for key, value in config.items():
-    parser.add_argument('-' + key, default=value)
+    if type(value) == int:
+        parser.add_argument('--' + key, default=value, type=int)
+    else:
+        parser.add_argument('--' + key, default=value)
 
 args = parser.parse_args()
 config["model_names_file"] = args.model_names_file
 config["exec_time_info"] = args.exec_time_info
+
+tuning_option['n_trial'] = args.n_trial
+tuning_option['early_stopping'] = args.early_stopping
+tuning_option['tuner'] = args.tuner
+
 
 dtype = 'float32'
 target = tvm.target.cuda()
@@ -200,8 +228,8 @@ def tune_and_evaluate(tuning_opt, network):
         # evaluate
         print("Evaluate inference time cost...")
         ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=600)
-        prof_res = np.array(ftimer().results) * 1000  # convert to millisecond
-        print("Mean inference time (std dev): %.2f ms (%.2f ms)" %
+        prof_res = np.array(ftimer().results)
+        print("Mean inference time (std dev): %.2f us (%.2f us)" %
               (np.mean(prof_res), np.std(prof_res)))
         
         return np.mean(prof_res), np.std(prof_res)
@@ -223,23 +251,7 @@ if __name__ == "__main__":
         f1.write("model name : " + model_name + '\n')
         
         log_file = "%s.log" % model_name
-
-        tuning_option = {
-            'log_filename': log_file,
-
-            'tuner': 'xgb',
-            'n_trial': 200,
-            'early_stopping': 60,
-
-            'measure_option': autotvm.measure_option(
-            builder=autotvm.LocalBuilder(timeout=10),
-            #runner=autotvm.LocalRunner(number=20, repeat=3, timeout=4, min_repeat_ms=150),
-            runner=autotvm.RPCRunner(
-                'V100_0',  # change the device key to your key
-                '0.0.0.0', 9190,
-                number=20, repeat=3, timeout=4, min_repeat_ms=150)
-            ),
-        }
+        tuning_option['log_filename'] = log_file
 
         sys.stdout = f1
         performance[model_name] = list(tune_and_evaluate(tuning_option, model_name))
