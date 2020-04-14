@@ -103,6 +103,7 @@ def test_relay(model_name, x):
         print(n_layer)
     else:
         block = get_model(model_name, pretrained=True)
+        shape_dict = {'data': x.shape}
         mod, params = relay.frontend.from_mxnet(block, shape_dict)
 
 
@@ -112,7 +113,6 @@ def test_relay(model_name, x):
     # Now we would like to port the Gluon model to a portable computational graph.
     # It's as easy as several lines.
     # We support MXNet static graph(symbol) and HybridBlock in mxnet.gluon
-    shape_dict = {'data': x.shape}
     ## we want a probability so add a softmax operator
     func = mod["main"]
     func = relay.Function(func.params, relay.nn.softmax(

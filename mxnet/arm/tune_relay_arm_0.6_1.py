@@ -67,6 +67,8 @@ from tvm.autotvm.tuner import XGBTuner, GATuner, RandomTuner, GridSearchTuner
 from tvm.contrib.util import tempdir
 import tvm.contrib.graph_runtime as runtime
 
+from mxnet.gluon.model_zoo.vision import get_model
+
 #################################################################
 # Define network
 # --------------
@@ -74,7 +76,21 @@ import tvm.contrib.graph_runtime as runtime
 # We can load some pre-defined network from :code:`relay.testing`.
 # We can also load models from MXNet, ONNX and TensorFlow.
 
-def get_network(name, batch_size):
+def get_network(name, batch_size, dtype, input_name):
+    input_shape = (batch_size, 3, 224, 224)
+    output_shape = (batch_size, 1000)
+    if name == 'inceptionv3':
+        input_shape = (1, 3, 299, 299)
+
+    block = get_model(name, pretrained=True)
+    mod, params = relay.frontend.from_mxnet(block, shape={input_name: input_shape}, dtype=dtype)
+    net = mod["main"]
+    net = relay.Function(net.params, relay.nn.softmax(net.body), None, net.type_params, net.attrs)
+    mod = relay.Module.from_expr(net)
+    return mod, params, input_shape, output_shape
+
+
+def get_network_old(name, batch_size):
     """Get the symbol definition and random weight of a network"""
     input_shape = (batch_size, 3, 224, 224)
     output_shape = (batch_size, 1000)
@@ -196,46 +212,7 @@ device_key = 'rk3399'
 use_android = False
 
 #### TUNING OPTION ####
-network = 'resnet-18'
-log_file = "%s.%s.log" % (device_key, network)
 dtype = 'float32'
-
-tuning_option = {
-    'log_filename': log_file,
-
-    'tuner': 'xgb',
-    'n_trial': 1500,
-    'early_stopping': 800,
-
-    'measure_option': autotvm.measure_option(
-        builder=autotvm.LocalBuilder(
-            build_func='ndk' if use_android else 'default'),
-        runner=autotvm.RPCRunner(
-            device_key, host='0.0.0.0', port=9190,
-            number=5,
-            timeout=10,
-        ),
-    ),
-}
-
-tuning_option = {
-    'log_filename': log_file,
-
-    'tuner': 'xgb',
-    'n_trial': 2,
-    'early_stopping': 1,
-
-    'measure_option': autotvm.measure_option(
-        builder=autotvm.LocalBuilder(
-            build_func='ndk' if use_android else 'default'),
-        runner=autotvm.RPCRunner(
-            device_key, host='0.0.0.0', port=9190,
-            number=5,
-            timeout=10,
-        ),
-    ),
-}
-
 ####################################################################
 #
 # .. note:: How to set tuning options
@@ -333,19 +310,25 @@ def tune_tasks(tasks,
 ########################################################################
 # Finally, we launch tuning jobs and evaluate the end-to-end performance.
 
-def tune_and_evaluate(tuning_opt):
+def tune_and_evaluate(tuning_opt, network, dtype, input_name):
     # extract workloads from relay program
     print("Extract tasks...")
-    mod, params, input_shape, _ = get_network(network, batch_size=1)
+    batch_size = 1
+    mod, params, input_shape, _ = get_network(network, batch_size, dtype, input_name)
     tasks = autotvm.task.extract_from_program(mod["main"], target=target,
                                               params=params,
                                               ops=(relay.op.nn.conv2d,))
 
-    # run tuning tasks
-    print("Tuning...")
-    #tune_tasks(tasks, **tuning_opt)
+    # get log_filename
+    log_file = tuning_opt['log_filename']
 
-    '''
+    # run tuning tasks
+    if os.path.exists(log_file):
+        print(log_file + " exists, skipping...")
+    else:
+        print("Tuning...")
+        tune_tasks(tasks, **tuning_opt)
+
     # compile kernels with history best records
     with autotvm.apply_history_best(log_file):
         print("Compile...")
@@ -383,9 +366,9 @@ def tune_and_evaluate(tuning_opt):
         prof_res = np.array(ftimer().results) * 1000  # convert to millisecond
         print("Mean inference time (std dev): %.2f ms (%.2f ms)" %
               (np.mean(prof_res), np.std(prof_res)))
-    '''
     
 
+    '''
     print("Compile...")
     with relay.build_config(opt_level=3):
         graph, lib, params = relay.build_module.build(
@@ -421,11 +404,112 @@ def tune_and_evaluate(tuning_opt):
     prof_res = np.array(ftimer().results) * 1000  # convert to millisecond
     print("Mean inference time (std dev): %.2f ms (%.2f ms)" %
           (np.mean(prof_res), np.std(prof_res)))
+    '''
     
 # We do not run the tuning in our webpage server since it takes too long.
 # Uncomment the following line to run it by yourself.
 
-tune_and_evaluate(tuning_option)
+
+import time
+def main(model_names):
+    batch_size = 1
+    dtype = "float32"
+    # Set the input name of the graph
+    # For ONNX models, it is typically "0".
+    input_name = "data"
+
+    for model_name in model_names:
+        print("model_name : "+model_name)
+        print("sleeping...")
+        time.sleep(1*10*60)
+        network = model_name
+        log_file_path = './log_file/'
+        log_file = log_file_path + "%s.%s.log" % (device_key, network)
+        print(log_file)
+
+        tuning_option = {
+            'log_filename': log_file,
+        
+            'tuner': 'xgb',
+            'n_trial': 1500,
+            'early_stopping': 800,
+        
+            'measure_option': autotvm.measure_option(
+                builder=autotvm.LocalBuilder(
+                    build_func='ndk' if use_android else 'default'),
+                runner=autotvm.RPCRunner(
+                    device_key, host='0.0.0.0', port=9190,
+                    number=5,
+                    timeout=10,
+                ),
+            ),
+        }
+
+        tuning_option = {
+            'log_filename': log_file,
+        
+            'tuner': 'xgb',
+            'n_trial': 200,
+            'early_stopping': 150,
+        
+            'measure_option': autotvm.measure_option(
+                builder=autotvm.LocalBuilder(
+                    build_func='ndk' if use_android else 'default'),
+                runner=autotvm.RPCRunner(
+                    device_key, host='0.0.0.0', port=9190,
+                    number=5,
+                    timeout=10,
+                ),
+            ),
+        }
+
+        tune_and_evaluate(tuning_option, network, dtype, input_name)
+
+if __name__ == '__main__':
+    model_names = [
+        #'inceptionv3',
+        #'mobilenet0.25',
+        #'mobilenet0.5',
+        #'mobilenet0.75',
+        #'mobilenet1.0',
+        #'mobilenetv2_0.25',
+        #'mobilenetv2_0.5',
+        #'mobilenetv2_0.75',
+        #'mobilenetv2_1.0',
+        #'resnet101_v1',
+        #'resnet101_v2',
+        #'resnet152_v1',
+        #'resnet152_v2',
+        #'resnet18_v1',
+        #'resnet18_v2',
+        #'resnet34_v1',
+        'resnet34_v2',
+        #'resnet50_v1',
+        'resnet50_v2',
+        'squeezenet1.0',
+        'squeezenet1.1',
+        'densenet121',
+        'densenet161',
+        'densenet169',
+        'densenet201',
+
+        'vgg11',
+        'vgg11_bn',
+        'vgg13',
+        'vgg13_bn',
+        'vgg16',
+        'vgg16_bn',
+        'vgg19',
+        'vgg19_bn',
+        'alexnet'
+            ]
+
+    #model_names = [
+    #    'resnet18_v2',
+    #        ]
+
+    main(model_names)
+
 
 ######################################################################
 # Sample Output

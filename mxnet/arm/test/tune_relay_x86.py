@@ -156,6 +156,7 @@ def tune_kernels(tasks,
 
         # do tuning
         n_trial=len(task.config_space)
+        n_trial=1
         tuner_obj.tune(n_trial=n_trial,
                        early_stopping=early_stopping,
                        measure_option=measure_option,
@@ -188,10 +189,11 @@ def tune_and_evaluate(tuning_opt, batch_size, dtype, model_name, log_file, graph
     # run tuning tasks
     print("Tuning...")
     tune_kernels(tasks, **tuning_opt)
-    tune_graph(mod["main"], data_shape, log_file,  input_name, graph_opt_sch_file)
+    #tune_graph(mod["main"], data_shape, log_file,  input_name, graph_opt_sch_file)
 
     # compile kernels with graph-level best records
-    with autotvm.apply_graph_best(graph_opt_sch_file):
+    #with autotvm.apply_graph_best(graph_opt_sch_file):
+    with autotvm.apply_history_best(log_file):
         print("Compile...")
         with relay.build_config(opt_level=3):
             graph, lib, params = relay.build_module.build(
@@ -225,7 +227,7 @@ def main(model_names):
 
         tuning_option = {
             'log_filename': log_file,
-            'tuner': 'random',
+            'tuner': 'xgb',
             'early_stopping': None,
         
             'measure_option': autotvm.measure_option(
@@ -278,9 +280,12 @@ if __name__ == '__main__':
         'vgg16_bn',
         'vgg19',
         'vgg19_bn',
-        'alexnet',
+        'alexnet'
             ]
 
+    model_names=[
+        'resnet18_v2',
+            ]
 
     main(model_names)
 

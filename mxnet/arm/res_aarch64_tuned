@@ -1,0 +1,55 @@
+model_name : inceptionv3
+sleeping...
+./log_file/rk3399.inceptionv3.log
+Extract tasks...
+./log_file/rk3399.inceptionv3.log exists, skipping...
+Compile...
+Traceback (most recent call last):
+
+  File "_ctypes/callbacks.c", line 232, in 'calling callback function'
+
+  File "/Users/varinic/git_project/tvm-0.6/python/tvm/_ffi/_ctypes/function.py", line 66, in cfun
+    def cfun(args, type_codes, num_args, ret, _):
+
+KeyboardInterrupt
+
+Traceback (most recent call last):
+
+  File "tune_relay_arm_0.6_1.py", line 511, in <module>
+    main(model_names)
+
+  File "tune_relay_arm_0.6_1.py", line 466, in main
+    tune_and_evaluate(tuning_option, network, dtype, input_name)
+
+  File "tune_relay_arm_0.6_1.py", line 337, in tune_and_evaluate
+    mod, target=target, params=params)
+
+  File "/Users/varinic/git_project/tvm-0.6/python/tvm/relay/build_module.py", line 244, in build
+    graph_json, mod, params = bld_mod.build(func, target, target_host, params)
+
+  File "/Users/varinic/git_project/tvm-0.6/python/tvm/relay/build_module.py", line 109, in build
+    self._build(func, target, target_host)
+
+  File "/Users/varinic/git_project/tvm-0.6/python/tvm/_ffi/_ctypes/function.py", line 207, in __call__
+    raise get_last_ffi_error()
+
+AttributeError: Traceback (most recent call last):
+  [bt] (8) 9   libtvm.dylib                        0x0000000112622e28 tvm::relay::ExprFunctor<tvm::relay::Value (tvm::relay::Expr const&)>::InitVTable()::'lambda4'(tvm::runtime::ObjectRef const&, tvm::relay::ExprFunctor<tvm::relay::Value (tvm::relay::Expr const&)>*)::__invoke(tvm::runtime::ObjectRef const&, tvm::relay::ExprFunctor<tvm::relay::Value (tvm::relay::Expr const&)>*) + 24
+  [bt] (7) 8   libtvm.dylib                        0x000000011261e992 tvm::relay::Interpreter::VisitExpr_(tvm::relay::CallNode const*) + 1042
+  [bt] (6) 7   libtvm.dylib                        0x000000011262486b tvm::relay::Interpreter::Invoke(tvm::relay::Closure const&, tvm::Array<tvm::relay::Value, void> const&, tvm::relay::Var const&) + 91
+  [bt] (5) 6   libtvm.dylib                        0x00000001126265d2 tvm::relay::Interpreter::InvokePrimitiveOp(tvm::relay::Function const&, tvm::Array<tvm::relay::Value, void> const&) + 2834
+  [bt] (4) 5   libtvm.dylib                        0x00000001125e4f52 tvm::relay::CompileEngineImpl::JIT(tvm::relay::CCacheKey const&) + 50
+  [bt] (3) 4   libtvm.dylib                        0x00000001125e5760 tvm::relay::CompileEngineImpl::LowerInternal(tvm::relay::CCacheKey const&) + 656
+  [bt] (2) 3   libtvm.dylib                        0x00000001125e6736 tvm::relay::CompileEngineImpl::CreateSchedule(tvm::relay::Function const&, tvm::Target const&) + 70
+  [bt] (1) 2   libtvm.dylib                        0x00000001125e8072 tvm::relay::ScheduleGetter::Create(tvm::relay::Function const&) + 3330
+  [bt] (0) 1   libtvm.dylib                        0x000000011276f3a5 std::__1::__function::__func<TVMFuncCreateFromCFunc::$_2, std::__1::allocator<TVMFuncCreateFromCFunc::$_2>, void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*)>::operator()(tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&) + 213
+  [bt] (6) 7   ???                                 0x00007ffeea4bc4d0 0x0 + 140732829254864
+  [bt] (5) 6   _ctypes.cpython-37m-darwin.so       0x0000000106667347 ffi_call_unix64 + 79
+  [bt] (4) 5   libtvm.dylib                        0x000000011276d8d8 TVMFuncCall + 72
+  [bt] (3) 4   libtvm.dylib                        0x000000011209af3b std::__1::__function::__func<void (*)(tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), std::__1::allocator<void (*)(tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*)>, void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*)>::operator()(tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&) + 59
+  [bt] (2) 3   libtvm.dylib                        0x000000011209854a tvm::NodeGetAttr(tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*) + 378
+  [bt] (1) 2   libtvm.dylib                        0x0000000112096efd tvm::ReflectionVTable::GetAttr(tvm::runtime::Object*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) const + 573
+  [bt] (0) 1   libtvm.dylib                        0x0000000111ec57e9 dmlc::LogMessageFatal::~LogMessageFatal() + 57
+  File "/Users/varinic/git_project/tvm-0.6/src/node/reflection.cc", line 109
+AttributeError: Schedule object has no attributed code_hash
+
