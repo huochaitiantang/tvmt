@@ -18,7 +18,7 @@ output_names = [ "output1" ]
 # Use the exporter from torch to convert to onnx 
 # model (that has the weights and net arch)
 #torch.onnx.export(model, dummy_input, "alexnet.onnx", verbose=True, input_names=input_names, output_names=output_names)
-path_onnx = "../onnx/"
+path_onnx = "../onnx/models_onnx/"
 torch.onnx.export(model, dummy_input, path_onnx + "resnet18.onnx", verbose=True, input_names=input_names, output_names=output_names)
 
 
