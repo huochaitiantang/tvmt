@@ -110,7 +110,7 @@ def test_relay(block, x):
     # from tvm.contrib import graph_runtime
     # Debug import
     from tvm.contrib.debugger import debug_runtime as graph_runtime
-    ctx = tvm.gpu(0)
+    ctx = tvm.gpu(1)
     # ctx = tvm.cpu(0)
     dtype = 'float32'
     # m = graph_runtime.create(graph, lib, ctx)
@@ -140,6 +140,7 @@ def main():
     ]
     '''
 
+    '''
     model_names = [
         'inceptionv3',
         'mobilenet0.25',
@@ -163,12 +164,34 @@ def main():
         'squeezenet1.0',
         'squeezenet1.1'
     ]
+    '''
+
+    import sys
+    import json
+
+    with open(sys.argv[1], 'r') as f:
+        model_names = json.load(f)['model_names']
+
+    stdout = sys.stdout
+    stderr = sys.stderr
+    f1 = open(sys.argv[2], 'w')
+    f2 = open(sys.argv[3], 'w')
 
     for model_name in model_names:
         print("model name : " + model_name)
+        f1.write("model name : " + model_name + '\n')
+        f2.write("model name : " + model_name + '\n')
         x = trans_image(model_name)
         block = get_model(model_name, pretrained=True)
+
+        sys.stdout = f1
+        sys.stderr = f2
         test_relay(block, x)
+        sys.stdout = stdout
+        sys.stderr = stderr
+
+    sys.stdout = stdout
+    sys.stderr = stderr
 
 
 if __name__ == "__main__":

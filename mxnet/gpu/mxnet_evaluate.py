@@ -58,7 +58,7 @@ config = {
     'config_err':'./log/target_config_err',
     'target':'cuda',
     'ctx_dev':'gpu',
-    'ctx_no':1
+    'ctx_no':0
 }
 
 parser = argparse.ArgumentParser()
@@ -129,45 +129,6 @@ def test_relay(block, x):
     return np.mean(prof_res), np.std(prof_res)
 
 def main():
-    '''
-    model_names = [
-        'squeezenet1.0',
-        'resnet18_v1',
-        'resnet50_v2',
-        'mobilenetv2_1.0',
-        'mobilenet1.0',
-        'inceptionv3',
-        'densenet121'
-        
-    ]
-    '''
-
-    '''
-    model_names = [
-        'inceptionv3',
-        'mobilenet0.25',
-        'mobilenet0.5',
-        'mobilenet0.75',
-        'mobilenet1.0',
-        'mobilenetv2_0.25',
-        'mobilenetv2_0.5',
-        'mobilenetv2_0.75',
-        'mobilenetv2_1.0',
-        'resnet101_v1',
-        'resnet101_v2',
-        'resnet152_v1',
-        'resnet152_v2',
-        'resnet18_v1',
-        'resnet18_v2',
-        'resnet34_v1',
-        'resnet34_v2',
-        'resnet50_v1',
-        'resnet50_v2',
-        'squeezenet1.0',
-        'squeezenet1.1'
-    ]
-    '''
-
     import json
     import sys
 

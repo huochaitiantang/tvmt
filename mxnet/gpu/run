@@ -1,5 +1,0 @@
-echo 'start test'
-python3 from_mxnet.py > $1 2> $2
-echo 'test finish'
-python3 read_result.py $1
-
