@@ -80,12 +80,13 @@ import onnx
 def get_network(name, batch_size, dtype, input_name):
     input_shape = (batch_size, 3, 224, 224)
     output_shape = (batch_size, 1000)
-    if name == 'inceptionv3':
+    if  'inception' in name:
         input_shape = (1, 3, 299, 299)
 
     model_path = '../models_onnx/resnet18.onnx'
     onnx_model = onnx.load(model_path)
-    input_name = 'input1'
+    #input_name = 'input1'
+    print("input_name: "+input_name)
     shape_dict = {input_name: input_shape}
     print(shape_dict)
     mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
@@ -369,7 +370,8 @@ def tune_and_evaluate(tuning_opt, network, dtype, input_name):
         #tvm_output = intrp.evaluate()(tvm.nd.array(x.astype(dtype)), **params).asnumpy()
         #
         data_tvm = tvm.nd.array((np.random.uniform(size=input_shape)).astype(dtype))
-        module.set_input('input1', data_tvm)
+        #module.set_input('input1', data_tvm)
+        module.set_input(input_name, data_tvm)
         module.set_input(**params)
 
         # evaluate
@@ -428,7 +430,7 @@ def main(model_names):
     dtype = "float32"
     # Set the input name of the graph
     # For ONNX models, it is typically "0".
-    input_name = "data"
+    input_name = "input1"
 
     for model_name in model_names:
         print("model_name : "+model_name)
@@ -479,94 +481,23 @@ def main(model_names):
 
 if __name__ == '__main__':
     model_names = [
-        #'inceptionv3',
-        #'mobilenet0.25',
-        #'mobilenet0.5',
-        #'mobilenet0.75',
-        #'mobilenet1.0',
-        #'mobilenetv2_0.25',
-        #'mobilenetv2_0.5',
-        #'mobilenetv2_0.75',
-        #'mobilenetv2_1.0',
-        #'resnet101_v1',
-        #'resnet101_v2',
-        #'resnet152_v1',
-        #'resnet152_v2',
-        #'resnet18_v1',
-        #'resnet18_v2',
-        #'resnet34_v1',
-        'resnet34_v2',
-        #'resnet50_v1',
-        'resnet50_v2',
-        'squeezenet1.0',
-        'squeezenet1.1',
-        'densenet121',
-        'densenet161',
-        'densenet169',
-        'densenet201',
-
-        'vgg11',
-        'vgg11_bn',
-        'vgg13',
-        'vgg13_bn',
-        'vgg16',
-        'vgg16_bn',
-        'vgg19',
-        'vgg19_bn',
-        'alexnet'
-            ]
-
-    #model_names = [
-    #    'resnet18_v2',
-    #        ]
+        'resnet18',          
+        'alexnet',           
+        'squeezenet1_0',     
+        'vgg16',             
+        'densenet161',       
+        'inception_v3',      
+        'googlenet',         
+        'shufflenet_v2_x1_0',
+        'mobilenet_v2',      
+        'resnext50_32x4d',   
+        'wide_resnet50_2',   
+        'mnasnet1_0',        
+    ]
+    model_names = [
+        'inception_v3',      
+        ]
 
     main(model_names)
 
 
-######################################################################
-# Sample Output
-# -------------
-# The tuning needs to compile many programs and extract feature from them.
-# So a high performance CPU is recommended.
-# One sample output is listed below.
-# It takes about 2 hours on a 32T AMD Ryzen Threadripper.
-#
-# .. code-block:: bash
-#
-#    Extract tasks...
-#    Tuning...
-#    [Task  1/12]  Current/Best:   22.37/  52.19 GFLOPS | Progress: (544/1000) | 406.59 s Done.
-#    [Task  2/12]  Current/Best:    6.51/  18.77 GFLOPS | Progress: (608/1000) | 325.05 s Done.
-#    [Task  3/12]  Current/Best:    4.67/  24.87 GFLOPS | Progress: (480/1000) | 372.31 s Done.
-#    [Task  4/12]  Current/Best:   11.35/  46.83 GFLOPS | Progress: (736/1000) | 602.39 s Done.
-#    [Task  5/12]  Current/Best:    1.01/  19.80 GFLOPS | Progress: (448/1000) | 262.16 s Done.
-#    [Task  6/12]  Current/Best:    2.47/  23.76 GFLOPS | Progress: (672/1000) | 563.85 s Done.
-#    [Task  7/12]  Current/Best:   14.57/  33.97 GFLOPS | Progress: (544/1000) | 465.15 s Done.
-#    [Task  8/12]  Current/Best:    1.13/  17.65 GFLOPS | Progress: (576/1000) | 365.08 s Done.
-#    [Task  9/12]  Current/Best:   14.45/  22.66 GFLOPS | Progress: (928/1000) | 724.25 s Done.
-#    [Task 10/12]  Current/Best:    3.22/  15.36 GFLOPS | Progress: (864/1000) | 564.27 s Done.
-#    [Task 11/12]  Current/Best:   11.03/  32.23 GFLOPS | Progress: (736/1000) | 635.15 s Done.
-#    [Task 12/12]  Current/Best:    8.00/  21.65 GFLOPS | Progress: (1000/1000) | 1111.81 s Done.
-#    Compile...
-#    Upload...
-#    Evaluate inference time cost...
-#    Mean inference time (std dev): 162.59 ms (0.06 ms)
-
-######################################################################
-#
-# .. note:: **Experiencing Difficulties?**
-#
-#   The auto tuning module is error-prone. If you always see " 0.00/ 0.00 GFLOPS",
-#   then there must be something wrong.
-#
-#   First, make sure you set the correct configuration of your device.
-#   Then, you can print debug information by adding these lines in the beginning
-#   of the script. It will print every measurement result, where you can find useful
-#   error messages.
-#
-#   .. code-block:: python
-#
-#      import logging
-#      logging.getLogger('autotvm').setLevel(logging.DEBUG)
-#
-#   Finally, always feel free to ask our community for help on https://discuss.tvm.ai
