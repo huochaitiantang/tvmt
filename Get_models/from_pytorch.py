@@ -4,18 +4,24 @@ import numpy as np
 import onnxruntime
 
 
+def load_ScriptModule(path):
+    return torch.jit.load(path).eval()
+
+def save_ScriptModule(model, path):
+    model.save(path)
+
 def load_model(path):
-    return torch.load(path)
+    return torch.load(path).eval()
 
 def save_model(model, path):
     torch.save(model, path)
 
 def get_model_from_torchvision(model_name, pretrained=True):
-    return getattr(models, model_name)(pretrained=pretrained)
+    return getattr(models, model_name)(pretrained=pretrained).eval()
 
 
-def export_onnx(model, model_input, path, verbose=True, input_names=['input1'], output_names=['output1']):
-    torch.onnx.export(model, dummy_input, path, verbose=verbose, input_names=input_names, output_names=output_names)
+def export_onnx(model, model_input, path, verbose=True, input_names=['input1'], output_names=['output1'], example_outputs=None):
+    torch.onnx.export(model, dummy_input, path, verbose=verbose, input_names=input_names, output_names=output_names, example_outputs=example_outputs)
 
 
 def get_rand_input(shape):
@@ -30,9 +36,8 @@ def get_onnx_path(model_name):
 
 
 def test_pt(dummy_input, model, model_name):
-    model1 = load_model(get_pt_path(model_name))
+    model1 = load_ScriptModule(get_pt_path(model_name))
     model.eval()
-    model1.eval()
     
     result = model(dummy_input).detach().numpy()
     result1 = model(dummy_input).detach().numpy()
@@ -64,17 +69,17 @@ if __name__ == "__main__":
                     "mnasnet1_0"]
     
     for model_name in model_names:
-        model = get_model_from_torchvision(model_name).eval()
-        
-        print("saving model {}...".format(model_name))
-        save_model(model, get_pt_path(model_name))
-        
         if "inception" in model_name:
             dummy_input = torch.randn(1, 3, 299, 299)
         else:
             dummy_input = torch.randn(1, 3, 224, 224)
 
-        export_onnx(model, dummy_input, get_onnx_path(model_name))
+        model = get_model_from_torchvision(model_name)
+        model = torch.jit.trace(model, dummy_input)
+
+        print("saving model {}...".format(model_name))
+        save_ScriptModule(model, get_pt_path(model_name))
+        export_onnx(model, dummy_input, get_onnx_path(model_name), example_outputs=model(dummy_input))
         
-        print("Check the result between pytorch and pt: {}".format(test_pt(dummy_input, model, model_name)))
+        print("Check the result between pytorch and .pt: {}".format(test_pt(dummy_input, model, model_name)))
         print("Check the result between pytorch and .onnx: {}".format(test_onnx(dummy_input, model, model_name)))
