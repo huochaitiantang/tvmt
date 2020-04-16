@@ -89,7 +89,7 @@ tuning_option = {
         builder=autotvm.LocalBuilder(timeout=10),
         #runner=autotvm.LocalRunner(number=20, repeat=3, timeout=4, min_repeat_ms=150),
         runner=autotvm.RPCRunner(
-            'V100_0',  # change the device key to your key
+            'V100',  # change the device key to your key
             '0.0.0.0', 9190,
             number=20, repeat=3, timeout=4, min_repeat_ms=150)
         ),
@@ -228,7 +228,7 @@ def tune_and_evaluate(tuning_opt, network):
         # evaluate
         print("Evaluate inference time cost...")
         ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=600)
-        prof_res = np.array(ftimer().results)
+        prof_res = np.array(ftimer().results) * 1000 * 1000
         print("Mean inference time (std dev): %.2f us (%.2f us)" %
               (np.mean(prof_res), np.std(prof_res)))
         
