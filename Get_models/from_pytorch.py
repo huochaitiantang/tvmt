@@ -1,6 +1,7 @@
 import torch
 import torchvision.models as models
 import numpy as np
+import onnxruntime
 
 
 def load_model(path):
@@ -26,6 +27,26 @@ def get_pt_path(model_name):
 
 def get_onnx_path(model_name):
     return "models/onnx/pytorch/pytorch_" + model_name + ".onnx"
+
+
+def test_pt(dummy_input, model, model_name):
+    model1 = load_model(get_pt_path(model_name))
+    model.eval()
+    model1.eval()
+    
+    result = model(dummy_input).detach().numpy()
+    result1 = model(dummy_input).detach().numpy()
+
+    return np.allclose(result, result1, rtol=1e-05, atol=1e-08)
+
+def test_onnx(dummy_input, model, model_name):
+    model.eval()
+    result = model(dummy_input).detach().numpy()
+    
+    session = onnxruntime.InferenceSession(get_onnx_path(model_name))
+    result1 = np.array(session.run(["output1"],{"input1":dummy_input.detach().numpy()}))
+
+    return np.allclose(result, result1, rtol=1e-05, atol=1e-05)
 
 
 if __name__ == "__main__":
@@ -54,11 +75,6 @@ if __name__ == "__main__":
             dummy_input = torch.randn(1, 3, 224, 224)
 
         export_onnx(model, dummy_input, get_onnx_path(model_name))
-
-        # model1 = load_model(get_pt_path(model_name))
-        # model1.eval()
         
-        # result = model(dummy_input).detach().numpy()
-        # result1 = model1(dummy_input).detach().numpy()
-        
-        # print(np.allclose(result, result1, rtol=1e-05, atol=1e-08))
+        print("Check the result between pytorch and pt: {}".format(test_pt(dummy_input, model, model_name)))
+        print("Check the result between pytorch and .onnx: {}".format(test_onnx(dummy_input, model, model_name)))
