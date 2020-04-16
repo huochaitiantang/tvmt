@@ -25,7 +25,8 @@ def get_network(name, batch_size, dtype, input_name):
     if  'inception' in name:
         input_shape = (1, 3, 299, 299)
 
-    model_path = '../models_onnx/resnet18.onnx'
+    model_path = '../models_onnx/' + name + '.onnx'
+    print("model_path : "+model_path)
     onnx_model = onnx.load(model_path)
     #input_name = 'input1'
     print("input_name: "+input_name)
@@ -239,7 +240,7 @@ if __name__ == '__main__':
         'resnet18',          
         'alexnet',           
         'squeezenet1_0',     
-        'vgg16',             
+        #'vgg16',             
         'densenet161',       
         'inception_v3',      
         'googlenet',         
@@ -249,9 +250,6 @@ if __name__ == '__main__':
         'wide_resnet50_2',   
         'mnasnet1_0',        
     ]
-    #model_names = [
-    #    'inception_v3',      
-    #    ]
 
     main(model_names)
 
