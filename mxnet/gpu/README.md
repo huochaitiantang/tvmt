@@ -20,14 +20,15 @@ CUDA版本: 10.0（V100）
 
 mxnet_evaluate.py 包括如下参数：
 
-| 参数             | 说明                                                         | 备注             |
-| :--------------- | :----------------------------------------------------------- | :--------------- |
-| model_names_file | 测试模型名称所在文件，以json格式存储，key为“model_names”     | 文件格式为`json` |
-| exec_time_info   | 计算时间输出文件，其包括所有的标准输出                       |                  |
-| config_err       | python代码的warning和错误输出文件，主要内容为形如“can’t find config for target:…..” |                  |
-| target           | 设置tvm.build中的```target```                                | 默认为`cuda`     |
-| ctx_dev          | 设置module的运行设备                                         | 默认为`gpu`      |
-| ctx_no           | 设置module运行设备的编号                                     | 默认为`0`        |
+|参数说明|说明|备注|
+| :- | :- | :- |
+| --model_names_file | 测试模型名称所在文件，以json格式存储，key为“model_names”     | 文件格式为`json` |
+| --exec_time_info   | 计算时间输出文件，其包括所有的标准输出                       |                  |
+| --config_err       | python代码的warning和错误输出文件，主要内容为形如“can’t find config for target:…..” |                  |
+| --target           | 设置tvm.build中的```target```                                | 默认为`cuda`     |
+| --ctx_dev          | 设置module的运行设备                                         | 默认为`gpu`      |
+| --ctx_no           | 设置module运行设备的编号                                     | 默认为`0`        |
+|
 
 运行方式如下所示
 
