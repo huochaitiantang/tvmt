@@ -1,2 +1,11 @@
 symbol_and_params/
 **/*.onnx
+**/*.symbol
+**/*.params
+**/*.lib
+**/*.json
+./mxnet
+./onnx
+./pytorch
+./tensorflow
+
