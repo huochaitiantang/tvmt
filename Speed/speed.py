@@ -65,7 +65,7 @@ def get_model_config(filename):
     
     hardware = config[0]
     framework = config[1]
-    model_name = config[2]
+    model_name = '_'.join(config[2:])
     
     return hardware2target[hardware], framework, model_name
 
