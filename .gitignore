@@ -6,7 +6,6 @@ symbol_and_params/
 **/*.pt
 **/*.lib
 **/*.json
-**/*.log
 **/*.tmp
 /mxnet
 /onnx
