@@ -39,9 +39,9 @@ def onnx_convert_relay(onnx_model, shape_dict, target):
 
 
 if __name__ == '__main__':
-    hardware_list = ['x86']
+    hardware_list = ['x86', 'gpu']
 
-    hardware2target = {'x86': 'llvm'}
+    hardware2target = {'x86': 'llvm', 'gpu' : 'cuda'}
     root_path = '../../Get_models/models/onnx/'
     
     framework_list = file_walk(root_path)
