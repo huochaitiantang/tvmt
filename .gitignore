@@ -8,8 +8,8 @@ symbol_and_params/
 **/*.json
 **/*.log
 **/*.tmp
-./mxnet
-./onnx
-./pytorch
-./tensorflow
+/mxnet
+/onnx
+/pytorch
+/tensorflow
 
