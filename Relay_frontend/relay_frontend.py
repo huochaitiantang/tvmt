@@ -79,18 +79,13 @@ def relay_save_lib(model_name, mod, params):
 
     # save the graph, lib and params into separate files
     deploy_name = args.target + '_' + args.framework + '_' + model_name
-    print(deploy_name)
-    path = './lib_json_params/' + args.target + '/' + args.framework + '/' + model_name
-    print(path)
-    temp = util.tempdir()
-    path_lib = temp.relpath(  deploy_name + "_lib.tar")
-    print(deploy_name +"_lib.tar")
+    path = './lib_json_params/' + args.target + '/' + args.framework + '/'
+    lib.export_library( path + deploy_name + '.tar' )
 
-    with open(temp.relpath( deploy_name + "_graph.json"), "w") as fo:
+    with open( path + deploy_name + ".json", "w") as fo:
         fo.write(graph)
-    with open(temp.relpath( deploy_name + "_param.params"), "wb") as fo:
+    with open( path + deploy_name + ".params", "wb") as fo:
         fo.write(relay.save_param_dict(params))
-    print(temp.listdir())
 
 
 def relay_save_lib_mxnet(model_name):

@@ -5,6 +5,7 @@ symbol_and_params/
 **/*.pb
 **/*.pt
 **/*.lib
+**/*.tar
 **/*.json
 **/*.tmp
 /mxnet
