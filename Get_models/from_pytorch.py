@@ -20,7 +20,7 @@ def get_model_from_torchvision(model_name, pretrained=True):
     return getattr(models, model_name)(pretrained=pretrained).eval()
 
 
-def export_onnx(model, model_input, path, verbose=True, input_names=['input1'], output_names=['output1'], example_outputs=None):
+def export_onnx(model, model_input, path, verbose=True, input_names=['data'], output_names=['output1'], example_outputs=None):
     torch.onnx.export(model, dummy_input, path, verbose=verbose, input_names=input_names, output_names=output_names, example_outputs=example_outputs)
 
 
@@ -49,7 +49,7 @@ def test_onnx(dummy_input, model, model_name):
     result = model(dummy_input).detach().numpy()
     
     session = onnxruntime.InferenceSession(get_onnx_path(model_name))
-    result1 = np.array(session.run(["output1"],{"input1":dummy_input.detach().numpy()}))
+    result1 = np.array(session.run(["output1"],{"data":dummy_input.detach().numpy()}))
 
     return np.allclose(result, result1, rtol=1e-05, atol=1e-05)
 
