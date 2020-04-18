@@ -169,7 +169,7 @@ if __name__ == '__main__':
         for path in temp:
             target, framework, model_name = get_model_config(path)
 
-            graph, lib, params = load_module(file_path)
+            graph, lib, params = load_module(path + '.json', path + '.lib', path + '.params')
             module = build(target, graph, lib)
 
             if 'inception' in model_name:

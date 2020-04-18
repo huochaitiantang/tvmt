@@ -1,2 +1,7 @@
 symbol_and_params/
 **/*.onnx
+/mxnet
+/pytorch
+/onnx
+**/*.json
+**/*.pt
