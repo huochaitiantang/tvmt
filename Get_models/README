@@ -1,0 +1,4 @@
+
+# how to run
+
+sh run.sh mxnet resnet18_v2

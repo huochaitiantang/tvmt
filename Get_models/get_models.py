@@ -6,7 +6,7 @@ from mxnet.gluon.model_zoo.vision import get_model
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False)
-parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18', required=False)
+parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
 
 args = parser.parse_args()
 print(args)
