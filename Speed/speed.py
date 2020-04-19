@@ -1,10 +1,12 @@
 import os
+import sys
+import argparse
+import numpy as np
+
 import tvm
 from tvm import relay
 from tvm.contrib import util
 import tvm.contrib.graph_runtime as runtime
-
-import numpy as np
 
 use_android=False
 
@@ -20,6 +22,16 @@ hardware2ctx = {
         'gpu': tvm.gpu(1),
         'arm': tvm.context(str(hardware2target['arm']), 0)
 }
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--target', type=str, default='all', help='a chosen target, like x86, gpu or arm', required=False, choices=['all', 'x86', 'gpu', 'arm'])
+parser.add_argument('--framework', type=str, default='all', help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=['all', 'mxnet', 'pytorch2onnx', 'tensorflow'])
+parser.add_argument('--model', type=str, default='all', help='a chosen model, like resnet18_v2', required=False)
+parser.add_argument('--tuned', type=str, default='no', help='the model has been auto-tuned', required=False, choices=['yes', 'no'])
+
+args = parser.parse_args()
+
 
 # get the files and dictionary under path
 def file_walk(path):
@@ -152,10 +164,16 @@ def evaluate(module, params, input_shape, ctx, dtype='float32', repeat=600):
 
 
 if __name__ == '__main__':
-    root_path = '../Relay_frontend/lib_json_params/'
+    if args.tuned == 'yes':
+        root_path = '../Auto_tune/log/'
+    else:
+        root_path = '../Relay_frontend/lib_json_params/'
     batch_size = 1
     file_path = []
-    hardware_path_list = path_walk(root_path)
+    if args.target == 'all':
+        hardware_path_list = path_walk(root_path)
+    else:
+        hardware_path_list = [root_path + args.target]
     time_list = {}
 
     for hardware_path in hardware_path_list:
@@ -165,11 +183,26 @@ if __name__ == '__main__':
         temp = set()
         for file_path in file_walk(hardware_path):
             temp.add(file_path.split('.')[0])
+
+        if args.model != 'all':
+            model_temp = set()
+            for file_name in temp:
+                if args.model in file_name:
+                    model_temp.add(file_name)
+            temp = model_temp
         
-        # path is ../Relay_frontend/x86/x86_mxnet_resnet18
+        if args.framework != 'all':
+            framework_temp = set()
+            for file_name in temp:
+                if args.framework in file_name:
+                    framework_temp.add(file_name)
+            temp = framework_temp
+        
+        # path is x86_mxnet_resnet18
         for path in temp:
             target, framework, model_name = get_model_config(path)
             
+            # mod_path is ../Relay_frontend/x86/x86_mxnet_resnet18
             mod_path = hardware_path + '/' + path
             graph, lib, params = load_module(mod_path + '.json', mod_path + '.tar', mod_path + '.params')
             module = build(target, graph, lib)
