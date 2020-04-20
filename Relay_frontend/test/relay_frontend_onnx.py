@@ -4,6 +4,7 @@ import numpy as np
 import tvm
 import tvm.relay as relay
 
+
 # load onnx model
 def load_model(path):
     return onnx.load(path)
@@ -40,6 +41,7 @@ def onnx_convert_relay(onnx_model, shape_dict, target):
 
 if __name__ == '__main__':
     hardware_list = ['x86', 'gpu']
+    # hardware_list = ['gpu']
 
     hardware2target = {'x86': 'llvm', 'gpu' : 'cuda'}
     root_path = '../../Get_models/models/onnx/'
@@ -48,6 +50,7 @@ if __name__ == '__main__':
     for framework in framework_list:
         framework_path = root_path + framework + '/'
         file_list = file_walk(framework_path)
+        # file_list = ['pytorch_shufflenet_v2_x1_0.onnx']
 
         for file in file_list:
             model = load_model(framework_path + file)
@@ -65,7 +68,9 @@ if __name__ == '__main__':
 
                 module_path = get_module_path(hardware, framework + '2onnx', model_name)
                 try:
+                    print("begin building")
                     graph, lib, params = onnx_convert_relay(model, shape_dict, target)
+                    print("building finished")
                     save_prefix_module(graph, lib, params, module_path)
                     print(model_name)
                 except:

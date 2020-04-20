@@ -19,7 +19,7 @@ hardware2target = {
 
 hardware2ctx = {
         'x86': tvm.cpu(),
-        'gpu': tvm.gpu(1),
+        'gpu': tvm.gpu(),
         'arm': tvm.context(str(hardware2target['arm']), 0)
 }
 
