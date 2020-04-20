@@ -122,14 +122,14 @@ def build_arm(target, device_key, graph, lib):
     return module
 
 def build_cpu(graph, lib):
-    ctx = tvm.cpu()
+    ctx = hardware2ctx['x86']
     module = runtime.create(graph, lib, ctx)
     
     return module
 
 
 def build_gpu(graph, lib):
-    ctx = tvm.gpu()
+    ctx = hardware2ctx['gpu']
     module = runtime.create(graph, lib, ctx)
 
     return module
