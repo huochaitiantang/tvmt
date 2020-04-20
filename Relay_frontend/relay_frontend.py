@@ -59,11 +59,7 @@ def get_models_mxnet(model_name, shape_dict):
                                               arg_params=args, aux_params=auxs)
     return mod , relay_params
 
-def relay_save_lib(model_name, mod, params):
-    ## we want a probability so add a softmax operator
-    func = mod["main"]
-    func = relay.Function(func.params, relay.nn.softmax(func.body), None, func.type_params, func.attrs)
-
+def get_target():
     # now compile the graph
     if args.target == 'x86':
         target = tvm.target.create('llvm')
@@ -73,6 +69,16 @@ def relay_save_lib(model_name, mod, params):
         target = tvm.target.create('llvm -device=arm_cpu -target=armv7l-linux-gnueabihf -mattr=+neon')
     elif args.target == 'aarch64':
         target = tvm.target.create('llvm -device=arm_cpu -target=aarch64-linux-gnu -mattr=+neon')
+    return target
+
+
+
+def relay_save_lib(model_name, mod, params):
+    ## we want a probability so add a softmax operator
+    func = mod["main"]
+    func = relay.Function(func.params, relay.nn.softmax(func.body), None, func.type_params, func.attrs)
+
+    target = get_target()
 
     with relay.build_config(opt_level=3):
         graph, lib, params = relay.build(func, target, params=params)

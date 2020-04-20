@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $# != 2 ]; then
-  echo "please input framework and model name, like 'mxnet resnet18' !"
+  echo "please input framework and model name, like 'mxnet resnet18_v2' !"
   exit 1
 fi
 

@@ -199,19 +199,8 @@ def tuning( tuning_option,
         print("Tuning...")
         tune_tasks(tasks, **tuning_option)
 
-
-def get_log_file(model_name):
-    print("model_name : "+model_name)
-    log_file_path = './log/' + args.target + '/' + args.framework + '/'
-    log_file = log_file_path + args.target + '_' + args.framework + '_' + model_name +".log"
-    print(log_file)
-    return log_file
-
-
-def running(model_name, tuned= True):
     # compile kernels with history best records
     log_file = get_log_file(model_name)
-    use_android = False
     with autotvm.apply_history_best(log_file):
         print("Compile...")
         with relay.build_config(opt_level=3):
@@ -219,6 +208,7 @@ def running(model_name, tuned= True):
                 mod, target=target, params=params)
 
         # export library
+        from tvm.contrib.util import tempdir
         tmp = tempdir()
         if use_android:
             from tvm.contrib import ndk
@@ -237,7 +227,9 @@ def running(model_name, tuned= True):
 
         # upload parameters to device
         ctx = remote.context(str(target), 0)
+        import tvm.contrib.graph_runtime as runtime
         module = runtime.create(graph, rlib, ctx)
+        import numpy as np
         data_tvm = tvm.nd.array((np.random.uniform(size=input_shape)).astype(dtype))
         module.set_input('data', data_tvm)
         module.set_input(**params)
@@ -248,14 +240,26 @@ def running(model_name, tuned= True):
         prof_res = np.array(ftimer().results) * 1000  # convert to millisecond
         print("Mean inference time (std dev): %.2f ms (%.2f ms)" %
               (np.mean(prof_res), np.std(prof_res)))
- 
+
+
+def get_log_file(model_name):
+    print("model_name : "+model_name)
+    log_file_path = './log/' + args.target + '/' + args.framework + '/'
+    log_file = log_file_path + args.target + '_' + args.framework + '_' + model_name +".log"
+    print(log_file)
+    return log_file
+
+
 def tuning_mxnet(model_name):
     batch_size = 1
     dtype = "float32"
     # Set the input name of the graph
     # For ONNX models, it is typically "input1".
     input_name = "data"
-    device_key = 'rk3399'
+    if args.target == 'arm':
+        device_key = 'rasp3b'
+    elif args.target == 'aarch64':
+        device_key = 'rk3399'
     use_android = False
 
     log_file = get_log_file(model_name)
@@ -293,7 +297,6 @@ def main():
     model_name = args.model
     if args.framework == 'mxnet':
         tuning_mxnet(model_name)
-        #running(model_name, tuned=True)
     elif args.framework == 'tensorflow':
         tuning_tensorflow(model_name)
     elif args.framework == 'onnx':

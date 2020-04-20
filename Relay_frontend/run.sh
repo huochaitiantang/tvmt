@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $# != 3 ]; then
-  echo "please input target, framework and model name, like 'x86 mxnet resnet18' !"
+  echo "please input target, framework and model name, like 'x86 mxnet resnet18_v2' !"
   exit 1
 fi
 
