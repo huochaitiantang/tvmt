@@ -76,19 +76,23 @@ def get_models_pytorch(model_name):
     
     script = torch.jit.trace(model, dummy_input)
     current_path = os.path.dirname(__file__)
-    save_path = os.path.join(current_path, './models/pytorch/')
-    onnx_path = os.path.join(current_path, './models/onnx/pytorch/')
-    script.save(save_path + model_name + '.pt')
+    pytorch_path = os.path.join(current_path, './models/pytorch/')
+    onnx_path = os.path.join(current_path, './models/onnx/')
+    
+    if not os.path.exists(pytorch_path):
+        os.makedirs(pytorch_path)
+    if not os.path.exists(onnx_path):
+        os.makedirs(onnx_path)
 
-    torch.onnx.export(script, dummy_input, onnx_path + 'pytorch_' + model_name + '.onnx', verbose=True, input_names=['data'], output_names=['output1'], example_outputs=script(dummy_input))
+    script.save(pytorch_path + model_name + '.pt')
+
+    torch.onnx.export(script, dummy_input, onnx_path + model_name + '.onnx', verbose=True, input_names=['data'], output_names=['output1'], example_outputs=script(dummy_input))
 
 def main():
     if args.framework == 'mxnet':
         get_models_mxnet(args.model)
     elif args.framework == 'tensorflow':
-        get_models_onnx(args.model)
-    elif args.framework == 'onnx':
-        get_models_onnx(args.model)
+        get_models_tensorflow(args.model)
     elif args.framework == 'pytorch':
         get_models_pytorch(args.model)
 

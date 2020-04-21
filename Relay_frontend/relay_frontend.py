@@ -86,6 +86,8 @@ def relay_save_lib(model_name, mod, params):
     # save the graph, lib and params into separate files
     deploy_name = args.target + '_' + args.framework + '_' + model_name
     path = './lib_json_params/' + args.target + '/' + args.framework + '/'
+    if not os.path.exists(path):
+        os.makedirs(path)
     lib.export_library( path + deploy_name + '.tar' )
 
     with open( path + deploy_name + ".json", "w") as fo:
@@ -101,6 +103,25 @@ def relay_save_lib_mxnet(model_name):
 
     shape_dict = {'data': input_shape}
     mod, params = get_models_mxnet(model_name, shape_dict)
+    relay_save_lib(model_name, mod, params)
+
+
+def get_models_onnx(model_name, shape_dict):
+    import onnx
+
+    path = '../Get_models/models/onnx/'
+    model = onnx.load(path + model_name + '.onnx')
+    mod, relay_params = relay.frontend.from_onnx(model, shape_dict)
+
+    return mod, relay_params
+
+def relay_save_lib_onnx(model_name):
+    input_shape = (1, 3, 224, 224)
+    if 'inception' in model_name:
+        input_shape = (1, 3, 299, 299)
+    
+    shape_dict = {'data': input_shape}
+    mod, params = get_models_onnx(model_name, shape_dict)
     relay_save_lib(model_name, mod, params)
 
 

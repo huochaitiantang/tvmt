@@ -40,8 +40,9 @@ def onnx_convert_relay(onnx_model, shape_dict, target):
 
 
 if __name__ == '__main__':
-    hardware_list = ['x86', 'gpu']
+    # hardware_list = ['x86', 'gpu']
     # hardware_list = ['gpu']
+    hardware_list = ['x86']
 
     hardware2target = {'x86': 'llvm', 'gpu' : 'cuda'}
     root_path = '../../Get_models/models/onnx/'
@@ -49,8 +50,8 @@ if __name__ == '__main__':
     framework_list = file_walk(root_path)
     for framework in framework_list:
         framework_path = root_path + framework + '/'
-        file_list = file_walk(framework_path)
-        # file_list = ['pytorch_shufflenet_v2_x1_0.onnx']
+        # file_list = file_walk(framework_path)
+        file_list = ['pytorch_shufflenet_v2_x1_0.onnx']
 
         for file in file_list:
             model = load_model(framework_path + file)
