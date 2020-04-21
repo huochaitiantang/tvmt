@@ -102,7 +102,7 @@ def relay_save_lib(model_name, mod, params, log_file = None):
         #lib.export_library( path + deploy_name + '.dylib' )
         #lib.save( path + deploy_name + '.ll' )
     elif args.target == 'gpu':
-        lib.export_library( path + deploy_name + '.so' )
+        lib.export_library( path + deploy_name + '.tar' )
 
     with open( path + deploy_name + ".json", "w") as fo:
         fo.write(graph)

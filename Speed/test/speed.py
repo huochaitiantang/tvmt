@@ -141,23 +141,27 @@ def speed ( model_name, tuned = 'No' ):
         device_key = 'rasp3b'
     elif args.target == 'aarch64':
         device_key = 'rk3399'
+    elif args.target == 'gpu':
+        device_key = '1080ti'
 
     if tuned == 'Yes':
-        print( "get no tuned lib" )
+        print( "get tuned lib" )
         deploy_name = args.target + '_' + args.framework + '_' + model_name
         path = '../../Auto_tune/lib_json_params/' + args.target + '/' + args.framework + '/'
         path = path + deploy_name 
         graph, lib, params  = get_lib_json_params( path )
         path_lib = path + '.tar' 
+        print( "path of lib is : " + path_lib )
         name_lib = deploy_name + '.tar'
         running(graph, lib, path_lib, name_lib, params, input_shape, input_data, input_name, device_key, dtype)
     else:
-        print( "get tuned lib" )
+        print( "get no tuned lib" )
         deploy_name = args.target + '_' + args.framework + '_' + model_name
         path = '../../Relay_frontend/lib_json_params/' + args.target + '/' + args.framework + '/'
         path = path + deploy_name 
         graph, lib, params  = get_lib_json_params( path )
         path_lib = path + '.tar' 
+        print( "path of lib is : " + path_lib )
         name_lib = deploy_name + '.tar'
         running(graph, lib, path_lib, name_lib, params, input_shape, input_data, input_name, device_key, dtype)
 
