@@ -26,7 +26,7 @@ hardware2ctx = {
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--target', type=str, default='all', help='a chosen target, like x86, gpu or arm', required=False, choices=['all', 'x86', 'gpu', 'arm'])
-parser.add_argument('--framework', type=str, default='all', help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=['all', 'mxnet', 'pytorch2onnx', 'tensorflow'])
+parser.add_argument('--framework', type=str, default='all', help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=['all', 'mxnet', 'onnx', 'tensorflow'])
 parser.add_argument('--model', type=str, default='all', help='a chosen model, like resnet18_v2', required=False)
 parser.add_argument('--tuned', type=str, default='no', help='the model has been auto-tuned', required=False, choices=['yes', 'no'])
 
@@ -42,7 +42,7 @@ def path_walk(path):
     sub_path = []
     dir_list = file_walk(path)
     for dir_name in dir_list:
-        sub_path.append(path + dir_name)
+        sub_path.append(os.path.join(path, dir_name))
     
     return sub_path
 
@@ -57,7 +57,7 @@ def rfile_walk(path):
 
 # get the relativate path to the .json, .lib and .params
 def get_path(model_name, hardware, framework, tuned=False):
-    path = '../'
+    path = '../../'
     if tuned:
         path = path + 'Auto_tune/'
     else:
@@ -74,7 +74,7 @@ def get_model_config(filename):
     if '.' in config_name:
         config_name = '.'.join(config_name.split('.')[:-1])
     config = config_name.split('_')
-    
+
     hardware = config[0]
     framework = config[1]
     model_name = '_'.join(config[2:])
@@ -165,9 +165,9 @@ def evaluate(module, params, input_shape, ctx, dtype='float32', repeat=600):
 
 if __name__ == '__main__':
     if args.tuned == 'yes':
-        root_path = '../Auto_tune/log/'
+        root_path = '../../Auto_tune/log/'
     else:
-        root_path = '../Relay_frontend/lib_json_params/'
+        root_path = '../../Relay_frontend/lib_json_params/'
     batch_size = 1
     file_path = []
     if args.target == 'all':
@@ -180,43 +180,43 @@ if __name__ == '__main__':
         hardware = hardware_path.split('/')[-1]
         ctx = hardware2ctx[hardware]
 
-        temp = set()
-        for file_path in file_walk(hardware_path):
-            temp.add(file_path.split('.')[0])
-
-        if args.model != 'all':
-            model_temp = set()
-            for file_name in temp:
-                if args.model in file_name:
-                    model_temp.add(file_name)
-            temp = model_temp
-        
         if args.framework != 'all':
-            framework_temp = set()
-            for file_name in temp:
-                if args.framework in file_name:
-                    framework_temp.add(file_name)
-            temp = framework_temp
+            framework_path_list = ['/'.join([hardware_path ,args.framework])]
+        else:
+            framework_path_list = path_walk(hardware_path)
+
         
-        # path is x86_mxnet_resnet18
-        for path in temp:
-            target, framework, model_name = get_model_config(path)
+        for framework_path in framework_path_list:
+            temp = set()
+            for file_path in file_walk(framework_path):
+                temp.add(file_path.split('.')[0])
+
+            if args.model != 'all':
+                model_temp = set()
+                for file_name in temp:
+                    if args.model in file_name:
+                        model_temp.add(file_name)
+                temp = model_temp
             
-            # mod_path is ../Relay_frontend/x86/x86_mxnet_resnet18
-            mod_path = hardware_path + '/' + path
-            graph, lib, params = load_module(mod_path + '.json', mod_path + '.tar', mod_path + '.params')
-            module = build(target, graph, lib)
+            # path is x86_mxnet_resnet18
+            for path in temp:
+                target, framework, model_name = get_model_config(path)
+                
+                # mod_path is ../Relay_frontend/x86/onnx/x86_mxnet_resnet18
+                mod_path = framework_path + '/' + path
+                graph, lib, params = load_module(mod_path + '.json', mod_path + '.tar', mod_path + '.params')
+                module = build(target, graph, lib)
 
-            if 'inception' in model_name:
-                input_shape = (batch_size, 3, 299, 299)    
-            else:
-                input_shape = (batch_size, 3, 224, 224)
+                if 'inception' in model_name:
+                    input_shape = (batch_size, 3, 299, 299)    
+                else:
+                    input_shape = (batch_size, 3, 224, 224)
 
-            key = '_'.join([hardware, framework, model_name])
-            mean_time, std_time = evaluate(module, params, input_shape, ctx)
-            time_list[key] = [mean_time, std_time]
-            print('model: {}, time: {:.2f} us({:.2f} us)'.format(key, mean_time, std_time))
-            # print('model: {}, time: {:.2f} us({:.2f} us)'.format(key, time_list[key][0], time_list[key][1]))
+                key = '_'.join([hardware, framework, model_name])
+                mean_time, std_time = evaluate(module, params, input_shape, ctx)
+                time_list[key] = [mean_time, std_time]
+                print('model: {}, time: {:.2f} us({:.2f} us)'.format(key, mean_time, std_time))
+                # print('model: {}, time: {:.2f} us({:.2f} us)'.format(key, time_list[key][0], time_list[key][1]))
     
     print('-------------------------------------------')
     print("model \t time(us)")

@@ -1,9 +1,6 @@
 import os
 import sys
 import argparse
-import mxnet as mx
-from mxnet.gluon.model_zoo.vision import get_model
-from tvm.contrib import util
 import tvm.relay as relay
 import tvm
 from tvm import autotvm
@@ -11,11 +8,15 @@ from tvm.autotvm.tuner import XGBTuner, GATuner, RandomTuner, GridSearchTuner
 import numpy as np
 import tvm.contrib.graph_runtime as runtime
 
+framework =['mxnet', 'onnx', 'tensorflow'] 
+target = ['x86', 'gpu', 'arm', 'aarch64']
+tuned = ['Yes', 'No']
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--target', type=str, default=None, help='a chosen target, like x86, gpu, arm or aarch64', required=False)
-parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False)
+parser.add_argument('--target', type=str, default=None, help='a chosen target, like x86, gpu, arm or aarch64', required=False, choices=target)
+parser.add_argument('--framework', type=str, default='onnx', help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=framework)
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
-parser.add_argument('--tuned', type=str, default=None, help='test speed with tuned log or not', required=False)
+parser.add_argument('--tuned', type=str, default='No', help='test speed with tuned log or not', required=False, choices=tuned)
 
 args = parser.parse_args()
 print(args)
@@ -35,26 +36,8 @@ def get_model_names():
     return model_names
 
 models = get_model_names()
-print(models)
-
-print( args.target)
-print( args.framework)
-print( args.model)
-framework =['mxnet', 'onnx', 'tensorflow'] 
-target = ['x86', 'gpu', 'arm', 'aarch64']
-tuned = ['Yes', 'No']
-
-if args.target not in target:
-    print( str(args.target) + " not in " + str(target) )
-    sys.exit()
-if args.framework not in framework:
-    print( str(args.framework) + " not in " + str(framework) )
-    sys.exit()
 if args.model not in models:
     print( str(args.model) + " not in " + str(models) )
-    sys.exit()
-if args.tuned not in tuned:
-    print( str(args.tuned) + " not in " + str(tuned) )
     sys.exit()
 
 
@@ -118,6 +101,16 @@ def running(graph, lib, path_lib, name_lib, params, input_shape, input_data, inp
         number=100
         repeat=3
 
+    elif args.target == 'gpu':
+        ctx = tvm.gpu()
+        data_tvm = tvm.nd.array((np.random.uniform(size=input_shape)).astype(dtype))
+        module = runtime.create(graph, lib, ctx)
+        module.set_input(input_name, data_tvm)
+        #module.set_input(**params)
+        module.load_params( params )
+        number=1
+        repeat=600
+
     # evaluate
     print("Evaluate inference time cost...")
     ftimer = module.module.time_evaluator("run", ctx, number=number, repeat=repeat)
@@ -142,7 +135,7 @@ def speed ( model_name, tuned = 'No' ):
     elif args.target == 'aarch64':
         device_key = 'rk3399'
     elif args.target == 'gpu':
-        device_key = '1080ti'
+        device_key = 'V100'
 
     if tuned == 'Yes':
         print( "get tuned lib" )

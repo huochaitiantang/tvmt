@@ -4,8 +4,11 @@ import argparse
 import mxnet as mx
 from mxnet.gluon.model_zoo.vision import get_model
 
+
+framework =['mxnet', 'onnx', 'tensorflow', 'pytorch'] 
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False)
+parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=framework)
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
 
 args = parser.parse_args()
@@ -25,14 +28,6 @@ def get_model_names():
     return model_names
 
 models = get_model_names()
-print(models)
-
-print( args.framework)
-print( args.model)
-framework =['mxnet', 'onnx', 'tensorflow', 'pytorch'] 
-if args.framework not in framework:
-    print( str(args.framework) + " not in " + str(framework) )
-    sys.exit()
 if args.model not in models:
     print( str(args.model) + " not in " + str(models) )
     sys.exit()

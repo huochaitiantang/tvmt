@@ -7,9 +7,13 @@ from tvm.contrib import util
 import tvm.relay as relay
 import tvm
 
+
+framework =['mxnet', 'onnx', 'tensorflow'] 
+target = ['x86', 'gpu', 'arm', 'aarch64']
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--target', type=str, default=None, help='a chosen target, like x86, gpu, arm or aarch64', required=False)
-parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False)
+parser.add_argument('--target', type=str, default=None, help='a chosen target, like x86, gpu, arm or aarch64', required=False, choices=target)
+parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=target)
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
 
 args = parser.parse_args()
@@ -30,20 +34,6 @@ def get_model_names():
     return model_names
 
 models = get_model_names()
-print(models)
-
-print( args.target)
-print( args.framework)
-print( args.model)
-framework =['mxnet', 'onnx', 'tensorflow'] 
-target = ['x86', 'gpu', 'arm', 'aarch64']
-
-if args.target not in target:
-    print( str(args.target) + " not in " + str(target) )
-    sys.exit()
-if args.framework not in framework:
-    print( str(args.framework) + " not in " + str(framework) )
-    sys.exit()
 if args.model not in models:
     print( str(args.model) + " not in " + str(models) )
     sys.exit()
