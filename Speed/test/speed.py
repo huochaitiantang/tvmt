@@ -9,6 +9,7 @@ import tvm
 from tvm import autotvm
 from tvm.autotvm.tuner import XGBTuner, GATuner, RandomTuner, GridSearchTuner
 import numpy as np
+import tvm.contrib.graph_runtime as runtime
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--target', type=str, default=None, help='a chosen target, like x86, gpu, arm or aarch64', required=False)
@@ -87,26 +88,39 @@ def get_lib_json_params( path ):
 
 def running(graph, lib, path_lib, name_lib, params, input_shape, input_data, input_name, device_key, dtype= 'float32', use_android = False):
 
-    # upload module to device
-    print("Upload...")
-    remote = autotvm.measure.request_remote(device_key, '0.0.0.0', 9190,
-                                            timeout=10000)
-    remote.upload(path_lib)
-    rlib = remote.load_module(name_lib)
+    if args.target == 'arm' or args.target == 'aarch64':
+        # upload module to device
+        print("Upload...")
+        remote = autotvm.measure.request_remote(device_key, '0.0.0.0', 9190,
+                                                timeout=10000)
+        remote.upload(path_lib)
+        rlib = remote.load_module(name_lib)
 
-    # upload parameters to device
-    target = get_target()
-    ctx = remote.context(str(target), 0)
-    import tvm.contrib.graph_runtime as runtime
-    module = runtime.create(graph, rlib, ctx)
-    data_tvm = tvm.nd.array((np.random.uniform(size=input_shape)).astype(dtype))
-    module.set_input('data', data_tvm)
-    #module.set_input(**params)
-    module.load_params( params )
+        # upload parameters to device
+        target = get_target()
+        ctx = remote.context(str(target), 0)
+        module = runtime.create(graph, rlib, ctx)
+        data_tvm = tvm.nd.array((np.random.uniform(size=input_shape)).astype(dtype))
+        module.set_input('data', data_tvm)
+        #module.set_input(**params)
+        module.load_params( params )
+        number=1
+        repeat=10
+
+    elif args.target == 'x86':
+        # upload parameters to device
+        ctx = tvm.cpu()
+        data_tvm = tvm.nd.array((np.random.uniform(size=input_shape)).astype(dtype))
+        module = runtime.create(graph, lib, ctx)
+        module.set_input(input_name, data_tvm)
+        #module.set_input(**params)
+        module.load_params( params )
+        number=100
+        repeat=3
 
     # evaluate
     print("Evaluate inference time cost...")
-    ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=10)
+    ftimer = module.module.time_evaluator("run", ctx, number=number, repeat=repeat)
     prof_res = np.array(ftimer().results) * 1000  # convert to millisecond
     print("Mean inference time (std dev): %.2f ms (%.2f ms)" %
           (np.mean(prof_res), np.std(prof_res)))
@@ -122,12 +136,14 @@ def speed ( model_name, tuned = 'No' ):
         input_shape = ( batch_size, 3, 299, 299 )
     input_data = tvm.nd.array((np.random.uniform(size=input_shape)).astype(dtype))
     input_name = 'data'
+    device_key = None
     if args.target == 'arm':
         device_key = 'rasp3b'
     elif args.target == 'aarch64':
         device_key = 'rk3399'
 
-    if tuned :
+    if tuned == 'Yes':
+        print( "get no tuned lib" )
         deploy_name = args.target + '_' + args.framework + '_' + model_name
         path = '../../Auto_tune/lib_json_params/' + args.target + '/' + args.framework + '/'
         path = path + deploy_name 
@@ -136,6 +152,7 @@ def speed ( model_name, tuned = 'No' ):
         name_lib = deploy_name + '.tar'
         running(graph, lib, path_lib, name_lib, params, input_shape, input_data, input_name, device_key, dtype)
     else:
+        print( "get tuned lib" )
         deploy_name = args.target + '_' + args.framework + '_' + model_name
         path = '../../Relay_frontend/lib_json_params/' + args.target + '/' + args.framework + '/'
         path = path + deploy_name 

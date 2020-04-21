@@ -93,7 +93,16 @@ def relay_save_lib(model_name, mod, params, log_file = None):
     # save the graph, lib and params into separate files
     deploy_name = args.target + '_' + args.framework + '_' + model_name
     path = './lib_json_params/' + args.target + '/' + args.framework + '/'
-    lib.export_library( path + deploy_name + '.tar' )
+
+
+    if args.target == 'arm' or args.target == 'aarch64':
+        lib.export_library( path + deploy_name + '.tar' )
+    elif args.target == 'x86':
+        lib.export_library( path + deploy_name + '.tar' )
+        #lib.export_library( path + deploy_name + '.dylib' )
+        #lib.save( path + deploy_name + '.ll' )
+    elif args.target == 'gpu':
+        lib.export_library( path + deploy_name + '.so' )
 
     with open( path + deploy_name + ".json", "w") as fo:
         fo.write(graph)
@@ -223,10 +232,13 @@ def tuning_mxnet(model_name):
     # Set the input name of the graph
     # For ONNX models, it is typically "input1".
     input_name = "data"
+    device_key= None
     if args.target == 'arm':
         device_key = 'rasp3b'
     elif args.target == 'aarch64':
         device_key = 'rk3399'
+    elif args.target == 'gpu':
+        device_key = '1080ti'
     use_android = False
 
     log_file = get_log_file(model_name)
@@ -240,20 +252,41 @@ def tuning_mxnet(model_name):
         'use_android' : use_android
     }
 
+    if args.target == 'arm' or args.target == 'aarch64':
+        measure_option = autotvm.measure_option(
+                builder=autotvm.LocalBuilder(
+                    build_func='ndk' if use_android else 'default'),
+                runner=autotvm.RPCRunner(
+                    device_key, host='0.0.0.0', port=9190,
+                    number=5,
+                    timeout=10,
+                ),
+            )
+
+    elif args.target == 'x86':
+        measure_option = autotvm.measure_option(
+                builder=autotvm.LocalBuilder(),
+                runner=autotvm.LocalRunner(number=10, repeat=1,
+                                           min_repeat_ms=1000),
+            )
+
+    elif args.target == 'gpu':
+        measure_option = autotvm.measure_option(
+                builder=autotvm.LocalBuilder(timeout=10),
+                #runner=autotvm.LocalRunner(number=20, repeat=3, timeout=4, min_repeat_ms=150),
+                runner=autotvm.RPCRunner(
+                    '1080ti',  # change the device key to your key
+                    '0.0.0.0', 9190,
+                    number=20, repeat=3, timeout=4, min_repeat_ms=150)
+            )
+
+
     tuning_option = {
         'log_filename': log_file,
         'tuner': 'xgb',
         'n_trial': 1,
         'early_stopping': 150,
-        'measure_option': autotvm.measure_option(
-            builder=autotvm.LocalBuilder(
-                build_func='ndk' if use_android else 'default'),
-            runner=autotvm.RPCRunner(
-                device_key, host='0.0.0.0', port=9190,
-                number=5,
-                timeout=10,
-            ),
-        ),
+        'measure_option': measure_option
     }
 
     tuning( tuning_option, **other_option )
