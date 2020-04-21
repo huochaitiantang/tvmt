@@ -29,7 +29,7 @@ print(models)
 
 print( args.framework)
 print( args.model)
-framework =['mxnet', 'onnx', 'tensorflow'] 
+framework =['mxnet', 'onnx', 'tensorflow', 'pytorch'] 
 if args.framework not in framework:
     print( str(args.framework) + " not in " + str(framework) )
     sys.exit()
@@ -64,6 +64,24 @@ def get_models_mxnet(model_name):
     save_models(block, model_name, path_sym_params)
 
 
+def get_models_pytorch(model_name):
+    import torch
+    import torchvision.models as models
+
+    model = getattr(models, model_name)(pretrained=True).eval()
+    if "inception" in model_name:
+        dummy_input = torch.randn(1, 3, 299, 299)
+    else:
+        dummy_input = torch.randn(1, 3, 224, 224)
+    
+    script = torch.jit.trace(model, dummy_input)
+    current_path = os.path.dirname(__file__)
+    save_path = os.path.join(current_path, './models/pytorch/')
+    onnx_path = os.path.join(current_path, './models/onnx/pytorch/')
+    script.save(save_path + model_name + '.pt')
+
+    torch.onnx.export(script, dummy_input, onnx_path + 'pytorch_' + model_name + '.onnx', verbose=True, input_names=['data'], output_names=['output1'], example_outputs=script(dummy_input))
+
 def main():
     if args.framework == 'mxnet':
         get_models_mxnet(args.model)
@@ -71,6 +89,8 @@ def main():
         get_models_onnx(args.model)
     elif args.framework == 'onnx':
         get_models_onnx(args.model)
+    elif args.framework == 'pytorch':
+        get_models_pytorch(args.model)
 
 if __name__ == '__main__':
     main()
