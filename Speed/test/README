@@ -1,0 +1,7 @@
+
+#how to run
+
+sh run.sh aarch64 mxnet resnet18_v2 tuned
+or
+sh run.sh aarch64 mxnet resnet18_v2
+

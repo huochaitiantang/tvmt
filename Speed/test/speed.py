@@ -78,72 +78,19 @@ def get_log_file(model_name):
     return log_file
 
 
-def tuning_mxnet(model_name):
-    batch_size = 1
-    dtype = "float32"
-    # Set the input name of the graph
-    # For ONNX models, it is typically "input1".
-    input_name = "data"
-    if args.target == 'arm':
-        device_key = 'rasp3b'
-    elif args.target == 'aarch64':
-        device_key = 'rk3399'
-    use_android = False
-
-    log_file = get_log_file(model_name)
-
-    other_option = {
-        'model_name' : model_name,
-        'batch_size' : batch_size,
-        'dtype' : dtype,
-        'input_name' : input_name,
-        'device_key' : device_key,
-        'use_android' : use_android
-    }
-
-    tuning_option = {
-        'log_filename': log_file,
-        'tuner': 'xgb',
-        'n_trial': 1,
-        'early_stopping': 150,
-        'measure_option': autotvm.measure_option(
-            builder=autotvm.LocalBuilder(
-                build_func='ndk' if use_android else 'default'),
-            runner=autotvm.RPCRunner(
-                device_key, host='0.0.0.0', port=9190,
-                number=5,
-                timeout=10,
-            ),
-        ),
-    }
-
-    tuning( tuning_option, **other_option )
-
-
 def get_lib_json_params( path ):
     loaded_json = open( path + ".json" ).read()
     loaded_lib = tvm.module.load( path + '.tar' )
     loaded_params = bytearray(open( path + ".params", "rb").read())
     return loaded_json, loaded_lib, loaded_params
 
+
 def running(graph, lib, path_lib, name_lib, params, input_shape, input_data, input_name, device_key, dtype= 'float32', use_android = False):
-    # export library
-    #from tvm.contrib.util import tempdir
-    #tmp = tempdir()
-    #if use_android:
-    #    from tvm.contrib import ndk
-    #    filename = "net.so"
-    #    lib.export_library(tmp.relpath(filename), ndk.create_shared)
-    #else:
-    #    filename = "net.tar"
-    #    lib.export_library(tmp.relpath(filename))
 
     # upload module to device
     print("Upload...")
     remote = autotvm.measure.request_remote(device_key, '0.0.0.0', 9190,
                                             timeout=10000)
-    #remote.upload(tmp.relpath(filename))
-    #rlib = remote.load_module(filename)
     remote.upload(path_lib)
     rlib = remote.load_module(name_lib)
 
@@ -155,7 +102,7 @@ def running(graph, lib, path_lib, name_lib, params, input_shape, input_data, inp
     data_tvm = tvm.nd.array((np.random.uniform(size=input_shape)).astype(dtype))
     module.set_input('data', data_tvm)
     #module.set_input(**params)
-    module.set_input(params)
+    module.load_params( params )
 
     # evaluate
     print("Evaluate inference time cost...")
