@@ -29,7 +29,7 @@ def getData(path, data_lists):
             data_lists.append(line)
 
 def get_model_names():
-    path = '../../Get_models/models/mxnet/model_names'
+    path = '../Get_models/models/mxnet/model_names'
     model_names = []
     getData(path, model_names)
     return model_names
@@ -73,7 +73,7 @@ def get_target():
 
 def get_log_file(model_name):
     print("model_name : "+model_name)
-    log_file_path = '../../Auto_tune/log/' + args.target + '/' + args.framework + '/'
+    log_file_path = '../Auto_tune/log/' + args.target + '/' + args.framework + '/'
     log_file = log_file_path + args.target + '_' + args.framework + '_' + model_name +".log"
     print(log_file)
     return log_file
@@ -147,7 +147,7 @@ def speed ( model_name, tuned = 'No' ):
     if tuned == 'Yes':
         print( "get tuned lib" )
         deploy_name = args.target + '_' + args.framework + '_' + model_name
-        path = '../../Auto_tune/lib_json_params/' + args.target + '/' + args.framework + '/'
+        path = '../Auto_tune/lib_json_params/' + args.target + '/' + args.framework + '/'
         path = path + deploy_name 
         graph, lib, params  = get_lib_json_params( path )
         path_lib = path + '.tar' 
@@ -157,7 +157,7 @@ def speed ( model_name, tuned = 'No' ):
     else:
         print( "get no tuned lib" )
         deploy_name = args.target + '_' + args.framework + '_' + model_name
-        path = '../../Relay_frontend/lib_json_params/' + args.target + '/' + args.framework + '/'
+        path = '../Relay_frontend/lib_json_params/' + args.target + '/' + args.framework + '/'
         path = path + deploy_name 
         graph, lib, params  = get_lib_json_params( path )
         path_lib = path + '.tar' 
