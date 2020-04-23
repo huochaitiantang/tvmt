@@ -9,9 +9,13 @@ import tvm
 from tvm import autotvm
 from tvm.autotvm.tuner import XGBTuner, GATuner, RandomTuner, GridSearchTuner
 
+
+framework =['mxnet', 'onnx', 'tensorflow'] 
+target = ['x86', 'gpu', 'arm', 'aarch64']
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--target', type=str, default=None, help='a chosen target, like x86, gpu, arm or aarch64', required=False)
-parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False)
+parser.add_argument('--target', type=str, default=None, help='a chosen target, like x86, gpu, arm or aarch64', required=False, choices=target)
+parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=framework)
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
 
 args = parser.parse_args()
@@ -32,20 +36,6 @@ def get_model_names():
     return model_names
 
 models = get_model_names()
-print(models)
-
-print( args.target)
-print( args.framework)
-print( args.model)
-framework =['mxnet', 'onnx', 'tensorflow'] 
-target = ['x86', 'gpu', 'arm', 'aarch64']
-
-if args.target not in target:
-    print( str(args.target) + " not in " + str(target) )
-    sys.exit()
-if args.framework not in framework:
-    print( str(args.framework) + " not in " + str(framework) )
-    sys.exit()
 if args.model not in models:
     print( str(args.model) + " not in " + str(models) )
     sys.exit()
@@ -60,6 +50,17 @@ def get_models_mxnet(model_name, shape_dict):
     mod, relay_params = relay.frontend.from_mxnet(mx_sym, shape_dict,
                                               arg_params=args, aux_params=auxs)
     return mod , relay_params
+
+
+def get_models_onnx(model_name, shape_dict):
+    import onnx
+
+    path = '../Get_models/models/onnx/'
+    model = onnx.load(path + model_name + '.onnx')
+    mod, relay_params = relay.frontend.from_onnx(model, shape_dict)
+
+    return mod, relay_params
+
 
 def get_target():
     # now compile the graph
@@ -94,6 +95,8 @@ def relay_save_lib(model_name, mod, params, log_file = None):
     deploy_name = args.target + '_' + args.framework + '_' + model_name
     path = './lib_json_params/' + args.target + '/' + args.framework + '/'
 
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     if args.target == 'arm' or args.target == 'aarch64':
         lib.export_library( path + deploy_name + '.tar' )
@@ -110,13 +113,19 @@ def relay_save_lib(model_name, mod, params, log_file = None):
         fo.write(relay.save_param_dict(params))
 
 
+
+
 def get_network(model_name, batch_size, input_name):
     input_shape = ( batch_size, 3, 224, 224 )
     if 'inception' in model_name:
         input_shape = ( batch_size, 3, 299, 299 )
 
     shape_dict = {input_name: input_shape}
-    mod, params = get_models_mxnet(model_name, shape_dict)
+    if args.framework == 'mxnet':
+        mod, params = get_models_mxnet(model_name, shape_dict)
+    else:
+        mod, params = get_models_onnx(model_name, shape_dict)
+
     return mod, params, input_shape
 
 def tune_tasks(tasks,
@@ -221,12 +230,14 @@ def tuning( tuning_option,
 def get_log_file(model_name):
     print("model_name : "+model_name)
     log_file_path = './log/' + args.target + '/' + args.framework + '/'
+    if not os.path.exists(log_file_path):
+        os.makedirs(log_file_path)
     log_file = log_file_path + args.target + '_' + args.framework + '_' + model_name +".log"
     print(log_file)
     return log_file
 
 
-def tuning_mxnet(model_name):
+def tuning_model(model_name):
     batch_size = 1
     dtype = "float32"
     # Set the input name of the graph
@@ -238,7 +249,7 @@ def tuning_mxnet(model_name):
     elif args.target == 'aarch64':
         device_key = 'rk3399'
     elif args.target == 'gpu':
-        device_key = '1080ti'
+        device_key = 'V100'
     use_android = False
 
     log_file = get_log_file(model_name)
@@ -275,7 +286,7 @@ def tuning_mxnet(model_name):
                 builder=autotvm.LocalBuilder(timeout=10),
                 #runner=autotvm.LocalRunner(number=20, repeat=3, timeout=4, min_repeat_ms=150),
                 runner=autotvm.RPCRunner(
-                    '1080ti',  # change the device key to your key
+                    'V100',  # change the device key to your key
                     '0.0.0.0', 9190,
                     number=20, repeat=3, timeout=4, min_repeat_ms=150)
             )
@@ -291,16 +302,9 @@ def tuning_mxnet(model_name):
 
     tuning( tuning_option, **other_option )
 
-
-
 def main():
     model_name = args.model
-    if args.framework == 'mxnet':
-        tuning_mxnet(model_name)
-    elif args.framework == 'tensorflow':
-        tuning_tensorflow(model_name)
-    elif args.framework == 'onnx':
-        tuning_onnx(model_name)
+    tuning_model(model_name)
 
 if __name__ == '__main__':
     main()
