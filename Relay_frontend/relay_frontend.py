@@ -13,30 +13,11 @@ target = ['x86', 'gpu', 'arm', 'aarch64']
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--target', type=str, default=None, help='a chosen target, like x86, gpu, arm or aarch64', required=False, choices=target)
-parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=target)
+parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=framework)
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
 
 args = parser.parse_args()
 print(args)
-
-
-def getData(path, data_lists):
-    with open(path, 'r', encoding='UTF-8') as f:
-        lines = f.readlines()
-        for line in lines:
-            line = line.strip('\n')
-            data_lists.append(line)
-
-def get_model_names():
-    path = '../Get_models/models/mxnet/model_names'
-    model_names = []
-    getData(path, model_names)
-    return model_names
-
-models = get_model_names()
-if args.model not in models:
-    print( str(args.model) + " not in " + str(models) )
-    sys.exit()
 
 
 def get_models_mxnet(model_name, shape_dict):
