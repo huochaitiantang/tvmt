@@ -8,6 +8,28 @@
 
     获取将一轮编译、运行的结果保存至 `filename` 的 callback function，需要传递给 `tuner.tune(...)` 的 `callback` 参数。
 
+## 常用 SQL
+
+* `select err_no, count(*) as count from logs group by err_no;`
+
+    输出各错误号的数量分布，如
+
+    | err_no | count |
+    |--------|-------|
+    | 0	| 11213	|
+    | 1	| 817	|
+    | 4	| 431	|
+    | 6	| 7     |
+
+* `select * from logs where err_no=0 order by cost limit 10;`
+
+    输出前10快的各项信息。注意必须用 `err_no=0` 进行约束，因为错误 case 下的 `cost` 为0。
+
+* `select logs.id, err_no, err_text, kvs.k, kvs.v from logs join kvs where logs.err_no!=0 and logs.id=kvs.log_id and logs.workload=kvs.log_workload;`
+
+    输出错误码不为0的错误信息，以及相关的通过 `tvmt.report_json` 保存的所有信息。
+
+
 ## tvm 内部改动
 
 * 增加并使用 `tvmt.report_json` packed_function
