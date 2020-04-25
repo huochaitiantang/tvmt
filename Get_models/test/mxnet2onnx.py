@@ -1,26 +1,17 @@
 # some standard imports
 import mxnet as mx
-import tvm
-import tvm.relay as relay
 import numpy as np
 import os
+import argparse
+import sys
 
-######################################################################
-# Download Resnet18 model from Gluon Model Zoo
-# ---------------------------------------------
-# In this section, we download a pretrained imagenet model and classify an image.
-from tvm.contrib.download import download_testdata
 from mxnet.gluon.model_zoo.vision import get_model
-from PIL import Image
-from matplotlib import pyplot as plt
 import numpy as np
 from mxnet.contrib import onnx as onnx_mxnet
 
-######################################################################
-# Use MXNet symbol with pretrained weights
-# ----------------------------------------
-# MXNet often use `arg_params` and `aux_params` to store network parameters
-# separately, here we show how to use these weights with existing API
+parser = argparse.ArgumentParser()
+parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
+args = parser.parse_args()
 
 def getData(path, data_lists):
     with open(path, 'r', encoding='UTF-8') as f:
@@ -37,6 +28,11 @@ def get_model_names():
 
 models = get_model_names()
 print(models)
+
+if args.model not in models:
+    print( str(args.model) + " not in " + str(models) )
+    sys.exit()
+
 
 
 def block2symbol(block):
@@ -84,7 +80,7 @@ def main():
     #for model_name in model_names:
     #    print("model name : "+ model_name)
     #    mxnet2onnx(model_name, path_sym_params, path_onnx)
-    model_name = 'resnet18_v2'
+    model_name = args.model
     mxnet2onnx(model_name, path_sym_params, path_onnx)
 
 

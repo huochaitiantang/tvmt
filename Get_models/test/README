@@ -1,0 +1,5 @@
+
+#how to run run_mxnet2onnx.sh
+
+
+sh run_mxnet2onnx.sh resnet18_v2
