@@ -82,6 +82,30 @@ def get_models_pytorch(model_name):
     script.save(pytorch_path + model_name + '.pt')
 
     torch.onnx.export(script, dummy_input, onnx_path + model_name + '.onnx', verbose=True, input_names=['data'], output_names=['output1'], example_outputs=script(dummy_input))
+    
+
+    
+def get_models_tensorflow(model_name):
+    #get model list
+    from urllib.request import urlretrieve
+    list_path='./models/tensorflow/models_name'
+    tf_path='./models/tensorflow/'
+    models = []
+    with open(list_path, 'r', encoding='UTF-8') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip('\n')
+            model_link=line.split(' ')
+            if model_name in model_link:
+                filepath = os.path.join(tf_path, model_name)
+                if not os.path.exists(tf_path):
+                    os.makedirs(tf_path)
+                urlretrieve(model_link[1],filepath)
+                print("downloaded")
+                return
+    print("model not included!")
+    sys.exit()
+
 
 def main():
     if args.framework == 'mxnet':
