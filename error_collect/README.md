@@ -62,14 +62,24 @@
 
 * executor 修改
 
-    在 tvmd 的 tvm.tvmt 中，用 monkey patch 修改了原 executor 相关接口，以提供额外错误信息从 worker 进程返回到主进程的能力。
+    * 多进程
 
-    tvm 尝试并行处理多个 kernel 实例，如并行编译、并行运行，然后再汇总结果。并行时原理为多进程，采用进程间通信。所以并不能简单地用全局变量来各子进程的信息。
+        在 tvmd 的 tvm.tvmt 中，用 monkey patch 修改了原 executor 相关接口，以提供额外错误信息从 worker 进程返回到主进程的能力。
 
-    目前的 tvm 中的 Builder、Runner 内部都使用 Executor 来管理多进程任务的派发和返回结果的聚集。对于每一个 batch 的 input，都为其建立一个用来做进程间通信的 queue（python 的多进程通信机制），在子进程中按照超时时间往 queue 中放入 Timeout，如果子进程运行正常，则会在 Timeout 之前将正常返回结果放入 queue。
+        tvm 尝试并行处理多个 kernel 实例，如并行编译、并行运行，然后再汇总结果。并行时原理为多进程，采用进程间通信。所以并不能简单地用全局变量来各子进程的信息。
 
-    父进程启动一个 batch 的并行任务后，会在每个任务对应的 future 对象上调用 get 方法，其中会根据从 queue 取出的第一个对象类型情况获知是否 Timeout，如果运行正常，就能正常拿到结果。
+        目前的 tvm 中的 Builder、Runner 内部都使用 Executor 来管理多进程任务的派发和返回结果的聚集。对于每一个 batch 的 input，都为其建立一个用来做进程间通信的 queue（python 的多进程通信机制），在子进程中按照超时时间往 queue 中放入 Timeout，如果子进程运行正常，则会在 Timeout 之前将正常返回结果放入 queue。
 
-    我们的修改是，替换 `tvm.autotvm.measure.local_executor._execute_func` 和 `tvm.autotvm.measure.local_executor.LocalFuture.get`，前者额外在放入目标对象前先放入当前子进程下用 `tvmt.report_json` 保存的信息，后者则先取出这个对象并放入父进程的全局变量中，再执行剩下的正常操作。
+        父进程启动一个 batch 的并行任务后，会在每个任务对应的 future 对象上调用 get 方法，其中会根据从 queue 取出的第一个对象类型情况获知是否 Timeout，如果运行正常，就能正常拿到结果。
 
-    最终在 callback 时读取全局变量即可拿到每个子进程所返回的信息。
+        我们的修改是，替换 `tvm.autotvm.measure.local_executor._execute_func` 和 `tvm.autotvm.measure.local_executor.LocalFuture.get`，前者额外在放入目标对象前先放入当前子进程下用 `tvmt.report_json` 保存的信息，后者则先取出这个对象并放入父进程的全局变量中，再执行剩下的正常操作。
+
+        最终在 callback 时读取全局变量即可拿到每个子进程所返回的信息。
+
+    * 单进程
+
+        单进程仅仅针对 build、runner。
+
+        在实际 build、run 的过程中，增加部分都是向同一个全局变量 `current_tvmt_msg` 添加信息，即需要保证在进入 build 或者 run 的时候，该全局变量为空，并且在 build 或 run 之后，全局变量被使用（即写进“主进程”的 `current_batch_tvmt_msg` 全局变量）。单进程 executor 的做法是，在 `submit` 种判断如果为单进程模式，则直接运行任务，并使用 `class LocalFutureNoFork` 将结果返回。
+
+        因此这里 monkey patch 在执行 `submit` 前判断是否为单进程模式，如果是，则清理 `current_tvmt_msg`，并在原 `submit` 运行结束后把 `current_tvmt_msg` 放入 `current_batch_tvmt_msg`。
