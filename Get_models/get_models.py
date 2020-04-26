@@ -84,11 +84,12 @@ def get_models_pytorch(model_name):
     torch.onnx.export(script, dummy_input, onnx_path + model_name + '.onnx', verbose=True, input_names=['data'], output_names=['output1'], example_outputs=script(dummy_input))
     
 
-    
+'''
+#This is the old version without frozen graph
 def get_models_tensorflow(model_name):
     #get model list
-    from urllib.request import urlretrieve
     list_path='./models/tensorflow/models_name'
+    from urllib.request import urlretrieve
     tf_path='./models/tensorflow/'
     models = []
     with open(list_path, 'r', encoding='UTF-8') as f:
@@ -105,7 +106,34 @@ def get_models_tensorflow(model_name):
                 return
     print("model not included!")
     sys.exit()
+'''
 
+def get_models_tensorflow(model_name):
+    #from tvm.contrib.download import download_testdata
+    from urllib.request import urlretrieve
+    repo_base = 'https://github.com/dmlc/web-data/raw/master/tensorflow/models/'
+    list_path='./models/tensorflow/models_name'
+    tf_path='./models/tensorflow/'
+    models = []
+    with open(list_path, 'r', encoding='UTF-8') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip('\n')
+            model_link=line.split(' ')
+            if model_name in model_link:
+                 if not os.path.exists(tf_path):
+                     os.makedirs(tf_path)
+                 filepath = os.path.join(tf_path,model_name+'.pb')
+                 model_url = os.path.join(repo_base,model_link[1])
+                 print(model_url)
+                 print(filepath)
+                 urlretrieve(model_url,filepath)
+                 print('file in '+ filepath)
+                 return
+        print('model not included')
+        sys.exit()
+                 #tf_path = os.path.join(tf_path,model_name)
+                 #model_path = download_testdata(model_url, tf_path)
 
 def main():
     if args.framework == 'mxnet':
