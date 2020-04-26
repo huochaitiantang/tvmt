@@ -66,12 +66,28 @@ def get_models_pytorch(model_name):
     torch.onnx.export(script, dummy_input, onnx_path + model_name + '.onnx', verbose=True, input_names=['data'], output_names=['output1'], example_outputs=script(dummy_input))
     
 
-'''
-#This is the old version without frozen graph
+
+def untar(fname, dirs):
+    import tarfile
+    import shutil
+    try:
+        t = tarfile.open(fname)
+        names = t.getnames()
+        for name in names:
+            t.extract(name,path=dirs)
+        t.close()
+        for name in names:
+            os.popen('mv '+os.path.join(dirs,name)+' '+dirs)
+        #shutil.rmtree(os.path.join(dirs,names[0]))
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
 def get_models_tensorflow(model_name):
-    #get model list
-    list_path='./models/tensorflow/models_name'
+    #get_model_list
     from urllib.request import urlretrieve
+    list_path='./models/tensorflow/models_name'
     tf_path='./models/tensorflow/'
     models = []
     with open(list_path, 'r', encoding='UTF-8') as f:
@@ -80,16 +96,24 @@ def get_models_tensorflow(model_name):
             line = line.strip('\n')
             model_link=line.split(' ')
             if model_name in model_link:
-                filepath = os.path.join(tf_path, model_name)
+                filepath = os.path.join(tf_path, model_name+'.tar.gz')
                 if not os.path.exists(tf_path):
                     os.makedirs(tf_path)
-                urlretrieve(model_link[1],filepath)
-                print("downloaded")
+                if not os.path.exists(filepath):    
+                    print(model_link[1])
+                    urlretrieve(model_link[1],filepath)
+                else:
+                    print(model_name+" exists!")
+                if untar(filepath,os.path.join(tf_path, model_name+'/')):
+                    #os.remove(filepath)
+                    print("model ready.")
                 return
+            #models.append(model_link)
     print("model not included!")
     sys.exit()
-'''
 
+#This is an older version
+'''
 def get_models_tensorflow(model_name):
     #from tvm.contrib.download import download_testdata
     from urllib.request import urlretrieve
@@ -114,8 +138,7 @@ def get_models_tensorflow(model_name):
                  return
         print('model not included')
         sys.exit()
-                 #tf_path = os.path.join(tf_path,model_name)
-                 #model_path = download_testdata(model_url, tf_path)
+'''
 
 def main():
     if args.framework == 'mxnet':
@@ -125,6 +148,6 @@ def main():
     elif args.framework == 'pytorch':
         get_models_pytorch(args.model)
 
+
 if __name__ == '__main__':
     main()
-
