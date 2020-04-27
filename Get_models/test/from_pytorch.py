@@ -32,7 +32,7 @@ def get_pt_path(model_name):
 
 
 def get_onnx_path(model_name):
-    return "../models/onnx/pytorch/pytorch_" + model_name + ".onnx"
+    return "../models/onnx/" + model_name + ".onnx"
 
 
 def test_pt(dummy_input, model, model_name):
