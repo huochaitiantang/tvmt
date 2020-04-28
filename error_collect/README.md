@@ -52,9 +52,9 @@
 
         保存和一般 log 中基本相同的信息，提出部分字段为表头（如 target、cost），以方便查询。
 
-        | *id* | task_name | target | *workload* | config | err_no | cost | err_text |
-        |------|-----------|--------|------------|--------|--------|------|----------|
-        | 与 Config 实体在原一维空间的位置对应 | `tvm.autotvm.task.create` 的第一个参数 | 比如 cuda，和一般 log 中一样 | 序列化的 task 信息，主要包含 task 对应 function 的参数、Tensor shape、dtype 等信息。和一般 log 中一样 | 包含了一个 config 的完整信息，比如各个 knob 的取值，和一般 log 中一样 | 错误编号，参考 #1 中的总结 | 去掉最快、最慢后的平均 cost | 报错信息，和一般 log 中一样（不一定完整） |
+        | *id* | task_name | target | *workload* | config | err_no | trial_no | cost | err_text |
+        |------|-----------|--------|------------|--------|--------|----------|------|----------|
+        | 与 Config 实体在原一维空间的位置对应 | `tvm.autotvm.task.create` 的第一个参数 | 比如 cuda，和一般 log 中一样 | 序列化的 task 信息，主要包含 task 对应 function 的参数、Tensor shape、dtype 等信息。和一般 log 中一样 | 包含了一个 config 的完整信息，比如各个 knob 的取值，和一般 log 中一样 | 错误编号，参考 #1 中的总结 | 该 workload 下 tune 的第几次尝试 | 去掉最快、最慢后的平均 cost | 报错信息，和一般 log 中一样（不一定完整） |
 
     * kvs
 
