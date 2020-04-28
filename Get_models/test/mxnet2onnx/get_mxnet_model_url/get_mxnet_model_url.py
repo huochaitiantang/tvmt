@@ -15,7 +15,7 @@ def getData(path, data_lists):
             data_lists.append(line)
 
 def get_model_names():
-    path = '../../models/mxnet/model_names'
+    path = '../../../models/mxnet/model_names'
     model_names = []
     getData(path, model_names)
     return model_names
