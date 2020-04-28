@@ -92,7 +92,7 @@ def relay_save_lib_onnx(model_name):
         input_shape = (1, 3, 299, 299)
     
     shape_dict = {'data': input_shape}
-    mod, params = get_models_onnx(model_name, input_shape)
+    mod, params = get_models_onnx(model_name, shape_dict)
     relay_save_lib(model_name, mod, params)
 
 

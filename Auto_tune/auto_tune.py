@@ -273,12 +273,19 @@ def tuning_model(model_name):
                     number=20, repeat=3, timeout=4, min_repeat_ms=150)
             )
 
+    n_trial = 1
+    if args.target == 'arm' or args.target == 'aarch64':
+        n_trial = 200
+    elif args.target == 'x86':
+        n_trial = 1000
+    elif args.target == 'gpu':
+        n_trial = 1000
 
     tuning_option = {
         'log_filename': log_file,
         'tuner': 'xgb',
-        'n_trial': 1,
-        'early_stopping': 150,
+        'n_trial': n_trial,
+        'early_stopping': 200,
         'measure_option': measure_option
     }
 

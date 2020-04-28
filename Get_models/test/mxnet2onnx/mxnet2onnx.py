@@ -9,9 +9,9 @@ from mxnet.gluon.model_zoo.vision import get_model
 import numpy as np
 from mxnet.contrib import onnx as onnx_mxnet
 
-#parser = argparse.ArgumentParser()
-#parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
-#args = parser.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
+args = parser.parse_args()
 
 def getData(path, data_lists):
     with open(path, 'r', encoding='UTF-8') as f:
@@ -21,7 +21,7 @@ def getData(path, data_lists):
             data_lists.append(line)
 
 def get_model_names():
-    path = '../models/mxnet/model_names'
+    path = '../../models/mxnet/model_names'
     model_names = []
     getData(path, model_names)
     return model_names
@@ -29,9 +29,9 @@ def get_model_names():
 models = get_model_names()
 print(models)
 
-#if args.model not in models:
-#    print( str(args.model) + " not in " + str(models) )
-#    sys.exit()
+if args.model not in models:
+    print( str(args.model) + " not in " + str(models) )
+    sys.exit()
 
 
 
@@ -72,16 +72,16 @@ def mxnet2onnx(model_name, path_sym_params, path_onnx):
 
 
 def main():
-    path_onnx = '../models/onnx/'
+    path_onnx = '../../models/onnx/'
     path_sym_params = './symbol_and_params'
     os.makedirs(path_onnx, exist_ok=True)
 
     model_names = models
-    for model_name in model_names:
-        print("model name : "+ model_name)
-        mxnet2onnx(model_name, path_sym_params, path_onnx)
-    #model_name = args.model
-    #mxnet2onnx(model_name, path_sym_params, path_onnx)
+    #for model_name in model_names:
+    #    print("model name : "+ model_name)
+    #    mxnet2onnx(model_name, path_sym_params, path_onnx)
+    model_name = args.model
+    mxnet2onnx(model_name, path_sym_params, path_onnx)
 
 
 if __name__ == "__main__":
