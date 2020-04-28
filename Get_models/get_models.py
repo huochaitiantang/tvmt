@@ -66,7 +66,7 @@ def get_models_pytorch(model_name):
     torch.onnx.export(script, dummy_input, onnx_path + model_name + '.onnx', verbose=True, input_names=['data'], output_names=['output1'], example_outputs=script(dummy_input))
     
 
-
+'''
 def untar(fname, dirs):
     import tarfile
     import shutil
@@ -84,6 +84,7 @@ def untar(fname, dirs):
         print(e)
         return False
 
+#These models are provided by coco
 def get_models_tensorflow(model_name):
     #get_model_list
     from urllib.request import urlretrieve
@@ -111,13 +112,14 @@ def get_models_tensorflow(model_name):
             #models.append(model_link)
     print("model not included!")
     sys.exit()
-
-#This is an older version
 '''
+
+#These models are provided by tvm
+
 def get_models_tensorflow(model_name):
     #from tvm.contrib.download import download_testdata
     from urllib.request import urlretrieve
-    repo_base = 'https://github.com/dmlc/web-data/raw/master/tensorflow/models/'
+    repo_base = 'https://github.com/dmlc/web-data/raw/master/tensorflow/models'
     list_path='./models/tensorflow/models_name'
     tf_path='./models/tensorflow/'
     models = []
@@ -130,7 +132,7 @@ def get_models_tensorflow(model_name):
                  if not os.path.exists(tf_path):
                      os.makedirs(tf_path)
                  filepath = os.path.join(tf_path,model_name+'.pb')
-                 model_url = os.path.join(repo_base,model_link[1])
+                 model_url = repo_base+model_link[1]
                  print(model_url)
                  print(filepath)
                  urlretrieve(model_url,filepath)
@@ -138,7 +140,7 @@ def get_models_tensorflow(model_name):
                  return
         print('model not included')
         sys.exit()
-'''
+
 
 def main():
     if args.framework == 'mxnet':
