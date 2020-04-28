@@ -1,4 +1,4 @@
-inceptionv1 InceptionV1/classify_image_graph_def-with_shapes.pb
-inceptionv3 InceptionV3/inception_v3_2016_08_28_frozen-with_shapes.pb
-mobilenetv1 MobilenetV1/mobilenet_v1_1.0_224_frozen-with-shapes.pb
-resnetv2 ResnetV2/resnet-20180601_resnet_v2_imagenet-shapes.pb
+inceptionv1 /InceptionV1/classify_image_graph_def-with_shapes.pb
+inceptionv3 /InceptionV3/inception_v3_2016_08_28_frozen-with_shapes.pb
+mobilenet1.0 /MobilenetV1/mobilenet_v1_1.0_224_frozen-with-shapes.pb
+restnetv2 /ResnetV2/resnet-20180601_resnet_v2_imagenet-shapes.pb
