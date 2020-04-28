@@ -1,9 +1,6 @@
 import os
 import sys
 import argparse
-import mxnet as mx
-from mxnet.gluon.model_zoo.vision import get_model
-
 
 framework =['mxnet', 'onnx', 'tensorflow', 'pytorch'] 
 
@@ -16,6 +13,7 @@ print(args)
 
 
 def block2symbol(block):
+    import mxnet as mx
     data = mx.sym.Variable('data')
     sym = block(data)
     args = {}
@@ -26,6 +24,7 @@ def block2symbol(block):
 
 
 def save_models(block, model_name, path):
+    import mxnet as mx
     mx_sym, args, auxs = block2symbol(block)
     # usually we would save/load it as checkpoint
     os.makedirs(path, exist_ok=True)
@@ -34,6 +33,9 @@ def save_models(block, model_name, path):
 
 
 def get_models_mxnet(model_name):
+    import mxnet as mx
+    from mxnet.gluon.model_zoo.vision import get_model
+
     block = get_model(model_name, pretrained=True)
     this_file_path = os.path.dirname(__file__)
     path_sym_params = os.path.join(this_file_path, './models/mxnet/')
@@ -132,7 +134,8 @@ def get_models_tensorflow(model_name):
                  if not os.path.exists(tf_path):
                      os.makedirs(tf_path)
                  filepath = os.path.join(tf_path,model_name+'.pb')
-                 model_url = repo_base+model_link[1]
+ #                model_url = repo_base+model_link[1]
+                 model_url = model_link[1]
                  print(model_url)
                  print(filepath)
                  urlretrieve(model_url,filepath)
