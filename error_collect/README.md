@@ -37,6 +37,10 @@
 
     如果还是极长时间没有反应，连续按几次 ctrl c 结束程序，然后将进程临死前的输出复制下来进行分析。
 
+* `load_history` 也能卡住的吗？
+
+    不能。如果 log 行数大于 500，会在 `load_history` 过程中根据 log 调整 model，参考 `XGBoostCostModel.fit_log`。
+
 ## tvm 内部改动
 
 * 增加并使用 `tvmt.report_json` packed_function
