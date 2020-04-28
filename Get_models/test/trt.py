@@ -58,11 +58,12 @@ def inference(engine, h_input, h_output, d_input, d_output, stream):
 
     return t
 
-def check_output(output, model_file_path):
+def check_output(output, model_file_path, data):
     import onnxruntime
 
     session = onnxruntime.InferenceSession(model_file_path)
-    result = np.array(session.run([],{"data":data}))
+    inputs = {session.get_inputs()[0].name: data}
+    result = np.array(session.run([], inputs))
 
     mse = np.mean((output - result) ** 2)
     precision_meet = np.allclose(output, result, atol=1e-05)
@@ -92,7 +93,7 @@ if __name__ == '__main__':
     t = inference(engine, h_input, h_output, d_input, d_output, stream)
 
     print('check output')
-    mse, precision_assert = check_output(h_output, model_file_path)
+    mse, precision_assert = check_output(h_output, model_file_path, data)
     
     if precision_assert:
         print('pass the output check, the mse is {:.2e}'.format(mse))
