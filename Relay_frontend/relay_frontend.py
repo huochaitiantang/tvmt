@@ -92,8 +92,50 @@ def relay_save_lib_onnx(model_name):
         input_shape = (1, 3, 299, 299)
     
     shape_dict = {'data': input_shape}
-    mod, params = get_models_onnx(model_name, shape_dict)
+    mod, params = get_models_onnx(model_name, input_shape)
     relay_save_lib(model_name, mod, params)
+
+
+def get_models_tensorflow(model_name, shape_dict,output_dict):
+    import tensorflow as tf
+    from tensorflow.python.platform import gfile
+    layout = None
+    model_path = '../Get_models/models/tensorflow/'
+    model_path = model_path + model_name
+    #graph = tf.get_default_graph()
+    #graph_def = graph.as_graph_def()
+    #graph_def.ParseFromString(gfile.FastGFile(model_path, 'rb').read())
+    
+    with tf.compat.v1.gfile.GFile(model_path, 'rb') as f:
+        graph_def = tf.compat.v1.GraphDef()
+        graph_def.ParseFromString(f.read())
+        graph = tf.import_graph_def(graph_def, name='')
+        # Call the utility to import the graph definition into default graph.
+        #graph_def = tf_testing.ProcessGraphDefParam(graph_def)
+        # Add shapes to the graph.
+        #with tf.compat.v1.Session() as sess:
+        #    graph_def = tf_testing.AddShapesToGraphDef(sess, 'softmax')
+    
+    mod, relays_params = relay.frontend.from_tensorflow(graph_def,
+                                             layout=layout,shape=shape_dict)
+    return mod, relays_params
+
+def relay_save_lib_tensorflow(model_name):
+    if 'inceptionv3' in model_name:
+        input_shape = (1, 3, 299, 299)
+        shape_dict = {'input':input_shape}
+    elif 'inceptionv1' in model_name:
+        input_shape =(299,299,3)
+        shape_dict = {'DecodeJpeg/contents':input_shape}
+    elif 'mobilenet1.0' in model_name:
+        input_shape =(1,224,224,3)
+        shape_dict = {'input':input_shape}
+    output_dict = {'detection_boxes','detection_classes','detection_scores','num_detections'}
+    print ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print (shape_dict)
+    mod, params = get_models_tensorflow(model_name, shape_dict,output_dict)
+    relay_save_lib(model_name, mod, params)
+
 
 
 def main():
