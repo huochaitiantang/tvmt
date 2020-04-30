@@ -14,3 +14,4 @@ symbol_and_params/
 /pytorch
 /tensorflow
 
+__pycache__/
