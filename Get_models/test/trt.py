@@ -42,19 +42,21 @@ def allocate_buffer(engine):
     return h_input, h_output, d_input, d_output, stream
 
 
-def inference(engine, h_input, h_output, d_input, d_output, stream):
+def inference(engine, h_input, h_output, d_input, d_output, stream, times=100):
+    t = np.zeros((times,))
     context = engine.create_execution_context()
-    t = time.time()
-    # Transfer input data to the GPU.
-    cuda.memcpy_htod_async(d_input, h_input, stream)
-    # Run inference.
-    context.execute_async(bindings=[int(d_input), int(d_output)], stream_handle=stream.handle)
-    # Transfer predictions back from the GPU.
-    cuda.memcpy_dtoh_async(h_output, d_output, stream)
-    # Synchronize the stream
-    stream.synchronize()
-    # Return the host output. 
-    t = time.time() - t
+    for i in range(times):
+        t[i] = time.time()
+        # Transfer input data to the GPU.
+        cuda.memcpy_htod_async(d_input, h_input, stream)
+        # Run inference.
+        context.execute_async(bindings=[int(d_input), int(d_output)], stream_handle=stream.handle)
+        # Transfer predictions back from the GPU.
+        cuda.memcpy_dtoh_async(h_output, d_output, stream)
+        # Synchronize the stream
+        stream.synchronize()
+        # Return the host output. 
+        t[i] = time.time() - t[i]
 
     return t
 
@@ -100,6 +102,7 @@ if __name__ == '__main__':
     else:
         print('failed the ouput check, the mse is {:.2e}'.format(mse))
 
-    print('TenserRT inference time is {:.2f}ms'.format(t * 1000))
+    t = t * 1000
+    print('TenserRT inference time is {:.2f}ms({:.2f} ms)'.format(np.mean(t), np.std(t)))
     print('--------------------------------------------------')
 
