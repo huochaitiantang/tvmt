@@ -64,6 +64,10 @@
         |------|--------|--------------|---|---|
         | 编号，不重要 | foreign key -> `logs.id` | foreign key -> `logs.workload` | 字段名 | 字段值 |
 
+    * best_logs (view)
+
+        获得各个不同 `workload` 中速度最快的记录信息。
+
 * executor 修改
 
     * 多进程
