@@ -69,7 +69,7 @@ def running(graph, lib, path_lib, name_lib, params, input_shape, input_data, inp
         #module.set_input(**params)
         module.load_params( params )
         number=1
-        repeat=10
+        repeat=100
 
     elif args.target == 'x86':
         # upload parameters to device
