@@ -212,10 +212,10 @@ def tuning( tuning_option,
 
 def get_log_file(model_name):
     print("model_name : "+model_name)
-    log_file_path = './log/' + args.target + '/' + args.framework + '/'
+    log_file_path = './log/' + args.target + '/' + args.framework + '/' + str(args.batch_size) + 'batch/' 
     if not os.path.exists(log_file_path):
         os.makedirs(log_file_path)
-    log_file = log_file_path + args.target + '_' + args.framework + '_' + model_name +".log"
+    log_file = log_file_path + args.target + '_' + args.framework + '_' +str(args.batch_size) + 'batch_' + model_name +".log"
     print(log_file)
     return log_file
 

@@ -38,8 +38,8 @@ def get_target():
 
 def get_log_file(model_name):
     print("model_name : "+model_name)
-    log_file_path = '../Auto_tune/log/' + args.target + '/' + args.framework + '/'
-    log_file = log_file_path + args.target + '_' + args.framework + '_' + model_name +".log"
+    log_file_path = '../Auto_tune/log/' + args.target + '/' + args.framework + '/' + str(args.batch_size) + 'batch/'
+    log_file = log_file_path + args.target + '_' + args.framework + '_' + str(args.batch_size) + 'batch_' + model_name +".log"
     print(log_file)
     return log_file
 
