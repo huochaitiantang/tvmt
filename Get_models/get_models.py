@@ -7,6 +7,7 @@ framework =['mxnet', 'onnx', 'tensorflow', 'pytorch']
 parser = argparse.ArgumentParser()
 parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=framework)
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
+parser.add_argument('--batch_size', type=int, default=1)
 
 args = parser.parse_args()
 print(args)
@@ -49,9 +50,9 @@ def get_models_pytorch(model_name):
 
     model = getattr(models, model_name)(pretrained=True).eval()
     if "inception" in model_name:
-        dummy_input = torch.randn(1, 3, 299, 299)
+        dummy_input = torch.randn(args.batch_size, 3, 299, 299)
     else:
-        dummy_input = torch.randn(1, 3, 224, 224)
+        dummy_input = torch.randn(args.batch_size, 3, 224, 224)
     
     script = torch.jit.trace(model, dummy_input)
     current_path = os.path.dirname(__file__)

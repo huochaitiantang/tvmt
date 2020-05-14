@@ -1,8 +1,6 @@
 import os
 import sys
 import argparse
-import mxnet as mx
-from mxnet.gluon.model_zoo.vision import get_model
 from tvm.contrib import util
 import tvm.relay as relay
 import tvm
@@ -14,9 +12,10 @@ framework =['mxnet', 'onnx', 'tensorflow']
 target = ['x86', 'gpu', 'arm', 'aarch64']
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--target', type=str, default=None, help='a chosen target, like x86, gpu, arm or aarch64', required=False, choices=target)
-parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=framework)
+parser.add_argument('--target', type=str, default='gpu', help='a chosen target, like x86, gpu, arm or aarch64', required=False, choices=target)
+parser.add_argument('--framework', type=str, default='onnx', help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=framework)
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
+parser.add_argument('--batch_size', type=int, default=1)
 
 args = parser.parse_args()
 print(args)
@@ -24,6 +23,8 @@ print(args)
 
 
 def get_models_mxnet(model_name, shape_dict):
+    import mxnet as mx
+    
     path = '../Get_models/models/mxnet/'
     # for a normal mxnet model, we start from here
     #mx_sym, args, auxs = mx.model.load_checkpoint('resnet18_v1', 0)
@@ -220,7 +221,7 @@ def get_log_file(model_name):
 
 
 def tuning_model(model_name):
-    batch_size = 1
+    batch_size = args.batch_size
     dtype = "float32"
     # Set the input name of the graph
     # For ONNX models, it is typically "input1".
@@ -279,13 +280,13 @@ def tuning_model(model_name):
     elif args.target == 'x86':
         n_trial = 1000
     elif args.target == 'gpu':
-        n_trial = 1000
+        n_trial = 200
 
     tuning_option = {
         'log_filename': log_file,
         'tuner': 'xgb',
         'n_trial': n_trial,
-        'early_stopping': 200,
+        'early_stopping': 80,
         'measure_option': measure_option
     }
 

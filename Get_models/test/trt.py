@@ -8,6 +8,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default=None)
+parser.add_argument('--batch_size', type=int, default=1)
 args = parser.parse_args()
 print(args)
 
@@ -65,7 +66,7 @@ def check_output(output, model_file_path, data):
 
     session = onnxruntime.InferenceSession(model_file_path)
     inputs = {session.get_inputs()[0].name: data}
-    result = np.array(session.run([], inputs))
+    result = np.array(session.run([], inputs)).reshape(-1)
 
     mse = np.mean((output - result) ** 2)
     precision_meet = np.allclose(output, result, atol=1e-05)
@@ -85,14 +86,17 @@ if __name__ == '__main__':
     h_input, h_output, d_input, d_output, stream = allocate_buffer(engine)
     
     if "inception" in args.model:
-        input_shape = (1, 3, 299, 299)
+        input_shape = (args.batch_size, 3, 299, 299)
     else:
-        input_shape = (1, 3, 224, 224)
+        input_shape = (args.batch_size, 3, 224, 224)
     data = np.random.uniform(size=input_shape).astype('float32')
     np.copyto(h_input, data.reshape(-1))
 
     print('do inference')
     t = inference(engine, h_input, h_output, d_input, d_output, stream)
+
+    t = t * 1000
+    print('TenserRT inference time is {:.2f}ms({:.2f} ms)'.format(np.mean(t), np.std(t)))
 
     print('check output')
     mse, precision_assert = check_output(h_output, model_file_path, data)
@@ -101,8 +105,5 @@ if __name__ == '__main__':
         print('pass the output check, the mse is {:.2e}'.format(mse))
     else:
         print('failed the ouput check, the mse is {:.2e}'.format(mse))
-
-    t = t * 1000
-    print('TenserRT inference time is {:.2f}ms({:.2f} ms)'.format(np.mean(t), np.std(t)))
     print('--------------------------------------------------')
 

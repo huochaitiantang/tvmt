@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--target', type=str, default=None, help='a chosen target, like x86, gpu, arm or aarch64', required=False, choices=target)
 parser.add_argument('--framework', type=str, default=None, help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=framework)
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
+parser.add_argument('--batch_size', type=int, default=1)
 
 args = parser.parse_args()
 print(args)
@@ -68,9 +69,9 @@ def relay_save_lib(model_name, mod, params):
 
 
 def relay_save_lib_mxnet(model_name):
-    input_shape = ( 1, 3, 224, 224 )
+    input_shape = (args.batch_size, 3, 224, 224 )
     if 'inception' in model_name:
-        input_shape = ( 1, 3, 299, 299 )
+        input_shape = (args.batch_size, 3, 299, 299 )
 
     shape_dict = {'data': input_shape}
     mod, params = get_models_mxnet(model_name, shape_dict)
@@ -87,9 +88,9 @@ def get_models_onnx(model_name, shape_dict):
     return mod, relay_params
 
 def relay_save_lib_onnx(model_name):
-    input_shape = (1, 3, 224, 224)
+    input_shape = (args.batch_size, 3, 224, 224)
     if 'inception' in model_name:
-        input_shape = (1, 3, 299, 299)
+        input_shape = (args.batch_size, 3, 299, 299)
     
     shape_dict = {'data': input_shape}
     mod, params = get_models_onnx(model_name, shape_dict)

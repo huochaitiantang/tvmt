@@ -17,6 +17,7 @@ parser.add_argument('--target', type=str, default=None, help='a chosen target, l
 parser.add_argument('--framework', type=str, default='onnx', help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=framework)
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
 parser.add_argument('--tuned', type=str, default='No', help='test speed with tuned log or not', required=False, choices=tuned)
+parser.add_argument('--batch_size', type=int, default=1)
 
 args = parser.parse_args()
 print(args)
@@ -104,7 +105,7 @@ def running(graph, lib, path_lib, name_lib, params, input_shape, input_data, inp
 def speed ( model_name, tuned = 'No' ):
 
     dtype = 'float32'
-    batch_size = 1
+    batch_size = args.batch_size
     input_shape = ( batch_size, 3, 224, 224 )
     if 'inception' in model_name:
         input_shape = ( batch_size, 3, 299, 299 )
