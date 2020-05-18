@@ -69,7 +69,68 @@ def get_models_pytorch(model_name):
     torch.onnx.export(script, dummy_input, onnx_path + model_name + '.onnx', verbose=True, input_names=['data'], output_names=['output1'], example_outputs=script(dummy_input))
     
 
+#These models are provided by google
+def f_g(fname, dirs,model_name,output_node_name):
+    import tarfile
+    import shutil
+    try:
+        t = tarfile.open(fname)
+        names = t.getnames()
+        t.extractall(path=dirs)
+        t.close()
+        os.remove(fname)
+        if not os.path.exists (os.path.join(dirs ,model_name + '.pb')):
+            from tensorflow.python.tools import freeze_graph
+            freeze_graph.freeze_graph("./models/tensorflow/nf_model/"+model_name,
+                                              "",
+                                              "true",
+                                              "./models/tensorflow/"+names[0],
+                                              output_node_name,
+                                              "save/restore_all",
+                                              "",
+                                              "./models/tensorflow/" + model_name + ".pb",
+                                              "",
+                                              "",
+                                              "",
+                                              "",
+                                              "")
+            os.remove(os.path.join(dirs,names[0]))
+                                
+        else:
+            print(model_name+" exists!")
+        #for name in names:
+        #    os.popen('mv '+os.path.join(dirs,name)+' '+dirs)
+        #shutil.rmtree(fname)
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
+def get_models_tensorflow(model_name):
+    #get_model_list
+    from urllib.request import urlretrieve
+    list_path='./models/tensorflow/models_name'
+    tf_path='./models/tensorflow/'
+    models = []
+    with open(list_path, 'r', encoding='UTF-8') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip('\n')
+            model_link=line.split(' ')
+            if model_name in model_link:
+                filepath = os.path.join(tf_path, model_name+'.tar.gz')
+                if not os.path.exists(tf_path):
+                    os.makedirs(tf_path)
+                if not os.path.exists(filepath):    
+                    print(model_link[1])
+                    urlretrieve(model_link[1],filepath)
+                if f_g(filepath,tf_path,model_name,model_link[2]):
+                    print("model ready.")
+                return
+            #models.append(model_link)
+
 '''
+#These models are provided by coco
 def untar(fname, dirs):
     import tarfile
     import shutil
@@ -87,7 +148,6 @@ def untar(fname, dirs):
         print(e)
         return False
 
-#These models are provided by coco
 def get_models_tensorflow(model_name):
     #get_model_list
     from urllib.request import urlretrieve
@@ -115,15 +175,14 @@ def get_models_tensorflow(model_name):
             #models.append(model_link)
     print("model not included!")
     sys.exit()
-'''
+
 
 #These models are provided by tvm
-
 def get_models_tensorflow(model_name):
     #from tvm.contrib.download import download_testdata
     from urllib.request import urlretrieve
     repo_base = 'https://github.com/dmlc/web-data/raw/master/tensorflow/models'
-    list_path='./models/tensorflow/models_name'
+    list_path='./models/tensorflow/models_name_tvm'
     tf_path='./models/tensorflow/'
     models = []
     with open(list_path, 'r', encoding='UTF-8') as f:
@@ -144,7 +203,7 @@ def get_models_tensorflow(model_name):
                  return
         print('model not included')
         sys.exit()
-
+'''
 
 def main():
     if args.framework == 'mxnet':
