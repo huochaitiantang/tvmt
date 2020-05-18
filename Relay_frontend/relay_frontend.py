@@ -97,12 +97,12 @@ def relay_save_lib_onnx(model_name):
     relay_save_lib(model_name, mod, params)
 
 
-def get_models_tensorflow(model_name, shape_dict,output_dict):
+def get_models_tensorflow(model_name, shape_dict):
     import tensorflow as tf
     from tensorflow.python.platform import gfile
-    layout = None
+    layout = "NCHW"
     model_path = '../Get_models/models/tensorflow/'
-    model_path = model_path + model_name
+    model_path = model_path + model_name + '.pb'
     #graph = tf.get_default_graph()
     #graph_def = graph.as_graph_def()
     #graph_def.ParseFromString(gfile.FastGFile(model_path, 'rb').read())
@@ -122,19 +122,13 @@ def get_models_tensorflow(model_name, shape_dict,output_dict):
     return mod, relays_params
 
 def relay_save_lib_tensorflow(model_name):
-    if 'inceptionv3' in model_name:
-        input_shape = (1, 3, 299, 299)
+    if 'inception' in model_name:
+        input_shape = (args.batch_size, 224, 224, 3)
         shape_dict = {'input':input_shape}
-    elif 'inceptionv1' in model_name:
-        input_shape =(299,299,3)
-        shape_dict = {'DecodeJpeg/contents':input_shape}
-    elif 'mobilenet1.0' in model_name:
-        input_shape =(1,224,224,3)
+    else:
+        input_shape = (args.batch_size, 224, 224, 3)
         shape_dict = {'input':input_shape}
-    output_dict = {'detection_boxes','detection_classes','detection_scores','num_detections'}
-    print ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print (shape_dict)
-    mod, params = get_models_tensorflow(model_name, shape_dict,output_dict)
+    mod, params = get_models_tensorflow(model_name, shape_dict)
     relay_save_lib(model_name, mod, params)
 
 

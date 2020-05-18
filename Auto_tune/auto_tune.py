@@ -45,6 +45,21 @@ def get_models_onnx(model_name, shape_dict):
     return mod, relay_params
 
 
+def get_models_tensorflow(model_name, shape_dict):
+     import tensorflow as tf
+     from tensorflow.python.platform import gfile
+     layout = 'NCHW'
+     model_path = '../Get_models/models/tensorflow/'
+     model_path = model_path + model_name+'.pb'
+     with tf.compat.v1.gfile.GFile(model_path, 'rb') as f:
+         graph_def = tf.compat.v1.GraphDef()
+         graph_def.ParseFromString(f.read())
+         graph = tf.import_graph_def(graph_def, name='')
+     mod, relays_params = relay.frontend.from_tensorflow(graph_def,
+                                                layout=layout,shape=shape_dict)
+     return mod, relays_params
+
+
 def get_target():
     # now compile the graph
     if args.target == 'x86':
@@ -102,10 +117,14 @@ def get_network(model_name, batch_size, input_name):
     input_shape = ( batch_size, 3, 224, 224 )
     if 'inception' in model_name:
         input_shape = ( batch_size, 3, 299, 299 )
-
     shape_dict = {input_name: input_shape}
+    
     if args.framework == 'mxnet':
         mod, params = get_models_mxnet(model_name, shape_dict)
+
+    elif args.framework == 'tensorflow':
+        mod, params = get_models_tensorflow(model_name, shape_dict)
+    
     else:
         mod, params = get_models_onnx(model_name, shape_dict)
 
@@ -278,7 +297,7 @@ def tuning_model(model_name):
     if args.target == 'arm' or args.target == 'aarch64':
         n_trial = 200
     elif args.target == 'x86':
-        n_trial = 1000
+        n_trial = 1
     elif args.target == 'gpu':
         n_trial = 200
 
@@ -291,6 +310,7 @@ def tuning_model(model_name):
     }
 
     tuning( tuning_option, **other_option )
+
 
 def main():
     model_name = args.model

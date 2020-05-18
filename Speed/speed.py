@@ -104,6 +104,9 @@ def speed ( model_name, tuned = 'No' ):
         input_shape = ( batch_size, 3, 299, 299 )
     input_data = tvm.nd.array((np.random.uniform(size=input_shape)).astype(dtype))
     input_name = 'data'
+    if args.framework == 'tensorflow':
+        input_shape = (batch_size, 224, 224, 3)
+        input_name = 'input'
     device_key = None
     if args.target == 'arm':
         device_key = 'rasp3b'
