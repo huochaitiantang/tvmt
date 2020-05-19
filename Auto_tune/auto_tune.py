@@ -16,6 +16,7 @@ parser.add_argument('--target', type=str, default='gpu', help='a chosen target, 
 parser.add_argument('--framework', type=str, default='onnx', help='a chosen framework, like mxnet, onnx or tensorflow', required=False, choices=framework)
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
 parser.add_argument('--batch_size', type=int, default=1)
+parser.add_argument('--thread', type=int, default=1)
 
 args = parser.parse_args()
 print(args)
@@ -89,20 +90,26 @@ def relay_save_lib(model_name, mod, params, log_file = None):
         with relay.build_config(opt_level=3):
             graph, lib, params = relay.build(func, target, params=params)
 
-    # save the graph, lib and params into separate files
-    deploy_name = args.target + '_' + args.framework + '_' + model_name
-    path = './lib_json_params/' + args.target + '/' + args.framework + '/'
-
-    if not os.path.exists(path):
-        os.makedirs(path)
 
     if args.target == 'arm' or args.target == 'aarch64':
+        deploy_name = args.target + '_' + args.framework + '_' +str(args.batch_size) + 'batch_' +\
+                str(args.thread) + 'thread_' + model_name
+        path = './lib_json_params/' + args.target + '/' + args.framework + '/' + str(args.batch_size) + 'batch/' +\
+                str(args.thread) + 'thread/' 
+        if not os.path.exists(path):
+            os.makedirs(path)
         lib.export_library( path + deploy_name + '.tar' )
     elif args.target == 'x86':
+        deploy_name = args.target + '_' + args.framework + '_' + model_name
+        path = './lib_json_params/' + args.target + '/' + args.framework + '/'
+        if not os.path.exists(path):
+            os.makedirs(path)
         lib.export_library( path + deploy_name + '.tar' )
-        #lib.export_library( path + deploy_name + '.dylib' )
-        #lib.save( path + deploy_name + '.ll' )
     elif args.target == 'gpu':
+        deploy_name = args.target + '_' + args.framework + '_' + model_name
+        path = './lib_json_params/' + args.target + '/' + args.framework + '/'
+        if not os.path.exists(path):
+            os.makedirs(path)
         lib.export_library( path + deploy_name + '.tar' )
 
     with open( path + deploy_name + ".json", "w") as fo:
@@ -231,12 +238,22 @@ def tuning( tuning_option,
 
 def get_log_file(model_name):
     print("model_name : "+model_name)
-    log_file_path = './log/' + args.target + '/' + args.framework + '/' + str(args.batch_size) + 'batch/' 
-    if not os.path.exists(log_file_path):
-        os.makedirs(log_file_path)
-    log_file = log_file_path + args.target + '_' + args.framework + '_' +str(args.batch_size) + 'batch_' + model_name +".log"
-    print(log_file)
-    return log_file
+    if args.target == 'arm' or args.target == 'aarch64':
+        log_file_path = './log/' + args.target + '/' + args.framework + '/' + str(args.batch_size) + 'batch/' +\
+                str(args.thread) + 'thread/' 
+        if not os.path.exists(log_file_path):
+            os.makedirs(log_file_path)
+        log_file = log_file_path + args.target + '_' + args.framework + '_' +str(args.batch_size) + 'batch_' +\
+                str(args.thread) + 'thread_' + model_name +".log"
+        print(log_file)
+        return log_file
+    else:
+        log_file_path = './log/' + args.target + '/' + args.framework + '/' + str(args.batch_size) + 'batch/' 
+        if not os.path.exists(log_file_path):
+            os.makedirs(log_file_path)
+        log_file = log_file_path + args.target + '_' + args.framework + '_' +str(args.batch_size) + 'batch_' + model_name +".log"
+        print(log_file)
+        return log_file
 
 
 def tuning_model(model_name):
