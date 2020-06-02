@@ -1,5 +1,8 @@
 
 #how to run run_mxnet2onnx.sh
 
-
 sh run_mxnet2onnx.sh resnet18_v2
+
+mxnet转onnx，目前所有版本mxnet最高只支持导出的onnx版本为1.3.0，
+更高版本onnx，例如1.4.0及以上，mxnet官方还未支持导出。
+（注：onnx1.3.0最高支持python3.6安装，python3.7不支持）
