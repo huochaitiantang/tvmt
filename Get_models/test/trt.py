@@ -45,13 +45,18 @@ def allocate_buffer(engine):
 
 def inference(engine, h_input, h_output, d_input, d_output, stream, times=100):
     t = np.zeros((times,))
+    inner_t = np.zeros((times,))
     context = engine.create_execution_context()
     for i in range(times):
         t[i] = time.time()
         # Transfer input data to the GPU.
         cuda.memcpy_htod_async(d_input, h_input, stream)
+        stream.synchronize()
+        inner_t[i] = time.time()
         # Run inference.
         context.execute_async(bindings=[int(d_input), int(d_output)], stream_handle=stream.handle)
+        stream.synchronize()
+        inner_t[i] = time.time() - inner_t[i]
         # Transfer predictions back from the GPU.
         cuda.memcpy_dtoh_async(h_output, d_output, stream)
         # Synchronize the stream
@@ -59,7 +64,7 @@ def inference(engine, h_input, h_output, d_input, d_output, stream, times=100):
         # Return the host output. 
         t[i] = time.time() - t[i]
 
-    return t
+    return t, inner_t
 
 def check_output(output, model_file_path, data):
     import onnxruntime
@@ -73,16 +78,16 @@ def check_output(output, model_file_path, data):
     return mse, precision_meet
 
 if __name__ == '__main__':
-    print('--------------------------------------------------')
+    # print('--------------------------------------------------')
     if not args.model:
         print('We must have a model')
         exit()
 
     model_file_path = get_model_path(args.model)
-    print("build engine")
+    # print("build engine")
     engine = get_engine(model_file_path)
     
-    print('allocate buffer')
+    # print('allocate buffer')
     h_input, h_output, d_input, d_output, stream = allocate_buffer(engine)
     
     if "inception" in args.model:
@@ -92,18 +97,18 @@ if __name__ == '__main__':
     data = np.random.uniform(size=input_shape).astype('float32')
     np.copyto(h_input, data.reshape(-1))
 
-    print('do inference')
-    t = inference(engine, h_input, h_output, d_input, d_output, stream)
+    # print('do inference')
+    t, inner_t = inference(engine, h_input, h_output, d_input, d_output, stream)
 
     t = t * 1000
+    inner_t = inner_t * 1000
     print('TenserRT inference time is {:.2f}ms({:.2f} ms)'.format(np.mean(t), np.std(t)))
+    # print('TenserRT inference time is {:.2f}ms({:.2f} ms)'.format(np.mean(inner_t), np.std(inner_t)))
 
-    print('check output')
+    # print('check output')
     mse, precision_assert = check_output(h_output, model_file_path, data)
     
-    if precision_assert:
-        print('pass the output check, the mse is {:.2e}'.format(mse))
-    else:
-        print('failed the ouput check, the mse is {:.2e}'.format(mse))
-    print('--------------------------------------------------')
+    if not precision_assert:
+        print('failed the output check, the mse is {:.2e}'.format(mse))
+    # print('--------------------------------------------------')
 

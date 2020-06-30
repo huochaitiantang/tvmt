@@ -17,7 +17,7 @@ parser.add_argument('--framework', type=str, default='onnx', help='a chosen fram
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
 parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--thread', type=int, default=1)
-
+parser.add_argument('--quantize', type=str, default='No')
 args = parser.parse_args()
 print(args)
 
@@ -42,6 +42,10 @@ def get_models_onnx(model_name, shape_dict):
     path = '../Get_models/models/onnx/'
     model = onnx.load(path + model_name + '.onnx')
     mod, relay_params = relay.frontend.from_onnx(model, shape_dict)
+    if args.quantize == 'int8':
+        with relay.quantize.qconfig(nbit_activation=8,
+                                    dtype_activation='int8'):
+            mod = relay.quantize.quantize(mod, params=relay_params)
 
     return mod, relay_params
 
@@ -252,6 +256,8 @@ def get_log_file(model_name):
         if not os.path.exists(log_file_path):
             os.makedirs(log_file_path)
         log_file = log_file_path + args.target + '_' + args.framework + '_' +str(args.batch_size) + 'batch_' + model_name +".log"
+        if args.quantize != 'No':
+            log_file = log_file_path + '_'.join([args.target, args.framework, str(args.batch_size) + 'batch', model_name, args.quantize]) + '.log'
         print(log_file)
         return log_file
 
@@ -316,13 +322,13 @@ def tuning_model(model_name):
     elif args.target == 'x86':
         n_trial = 1
     elif args.target == 'gpu':
-        n_trial = 200
+        n_trial = 20
 
     tuning_option = {
         'log_filename': log_file,
         'tuner': 'xgb',
         'n_trial': n_trial,
-        'early_stopping': 80,
+        'early_stopping': 8,
         'measure_option': measure_option
     }
 
