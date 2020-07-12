@@ -78,7 +78,6 @@ def f_g(fname, dirs,model_name,output_node_name):
         names = t.getnames()
         t.extractall(path=dirs)
         t.close()
-        os.remove(fname)
         if not os.path.exists (os.path.join(dirs ,model_name + '.pb')):
             from tensorflow.python.tools import freeze_graph
             freeze_graph.freeze_graph("./models/tensorflow/nf_model/"+model_name,
@@ -95,6 +94,7 @@ def f_g(fname, dirs,model_name,output_node_name):
                                               "",
                                               "")
             os.remove(os.path.join(dirs,names[0]))
+            os.remove(fname)
                                 
         else:
             print(model_name+" exists!")
@@ -118,15 +118,19 @@ def get_models_tensorflow(model_name):
             line = line.strip('\n')
             model_link=line.split(' ')
             if model_name in model_link:
-                filepath = os.path.join(tf_path, model_name+'.tar.gz')
-                if not os.path.exists(tf_path):
-                    os.makedirs(tf_path)
-                if not os.path.exists(filepath):    
-                    print(model_link[1])
-                    urlretrieve(model_link[1],filepath)
-                if f_g(filepath,tf_path,model_name,model_link[2]):
-                    print("model ready.")
-                return
+                if not os.path.exists(tf_path+model_name+'.pb'):
+
+                    filepath = os.path.join(tf_path, model_name+'.tar.gz')
+                    if not os.path.exists(tf_path):
+                        os.makedirs(tf_path)
+                    if not os.path.exists(filepath):    
+                        print(model_link[1])
+                        urlretrieve(model_link[1],filepath)
+                    if f_g(filepath,tf_path,model_name,model_link[2]):
+                        print("model ready.")
+                    return
+                else:
+                    print(model_name+" exists!")
             #models.append(model_link)
 
 '''
