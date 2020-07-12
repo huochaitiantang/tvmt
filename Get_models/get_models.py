@@ -66,7 +66,7 @@ def get_models_pytorch(model_name):
 
     script.save(pytorch_path + model_name + '.pt')
 
-    torch.onnx.export(script, dummy_input, onnx_path + model_name + '.onnx', verbose=True, input_names=['data'], output_names=['output1'], example_outputs=script(dummy_input))
+    torch.onnx.export(script, dummy_input, onnx_path + model_name + '.onnx', verbose=False, input_names=['data'], output_names=['output1'], example_outputs=script(dummy_input))
     
 
 #These models are provided by google

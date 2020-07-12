@@ -18,6 +18,7 @@ parser.add_argument('--framework', type=str, default='onnx', help='a chosen fram
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
 parser.add_argument('--tuned', type=str, default='No', help='test speed with tuned log or not', required=False, choices=tuned)
 parser.add_argument('--batch_size', type=int, default=1)
+parser.add_argument('--thread', type=int, default=1)
 
 args = parser.parse_args()
 print(args)
@@ -63,7 +64,7 @@ def running(graph, lib, path_lib, name_lib, params, input_shape, input_data, inp
         #module.set_input(**params)
         module.load_params( params )
         number=1
-        repeat=100
+        repeat=10
 
     elif args.target == 'x86':
         # upload parameters to device
@@ -117,8 +118,14 @@ def speed ( model_name, tuned = 'No' ):
 
     if tuned == 'Yes':
         print( "get tuned lib" )
-        deploy_name = args.target + '_' + args.framework + '_' + model_name
-        path = '../Auto_tune/lib_json_params/' + args.target + '/' + args.framework + '/'
+        if args.target == 'arm' or args.target == 'aarch64':
+            deploy_name = args.target + '_' + args.framework + '_' +str(args.batch_size) + 'batch_' +\
+                    str(args.thread) + 'thread_' + model_name
+            path = '../Auto_tune/lib_json_params/' + args.target + '/' + args.framework + '/' + str(args.batch_size) + 'batch/' +\
+                    str(args.thread) + 'thread/' 
+        else:
+            deploy_name = args.target + '_' + args.framework + '_' + model_name
+            path = '../Auto_tune/lib_json_params/' + args.target + '/' + args.framework + '/'
         path = path + deploy_name 
         graph, lib, params  = get_lib_json_params( path )
         path_lib = path + '.tar' 

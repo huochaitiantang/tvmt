@@ -11,28 +11,8 @@ from mxnet.contrib import onnx as onnx_mxnet
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default=None, help='a chosen model, like resnet18_v2', required=False)
+parser.add_argument('--batch_size', type=int, default=1, required=False)
 args = parser.parse_args()
-
-def getData(path, data_lists):
-    with open(path, 'r', encoding='UTF-8') as f:
-        lines = f.readlines()
-        for line in lines:
-            line = line.strip('\n')
-            data_lists.append(line)
-
-def get_model_names():
-    path = '../../models/mxnet/model_names'
-    model_names = []
-    getData(path, model_names)
-    return model_names
-
-models = get_model_names()
-print(models)
-
-if args.model not in models:
-    print( str(args.model) + " not in " + str(models) )
-    sys.exit()
-
 
 
 def block2symbol(block):
@@ -55,7 +35,7 @@ def save_models(block, model_name, path):
 
 def convert_sym_params_to_onnx(model_name, path_sym_params, path_onnx):
     img_size = 299 if 'inceptionv3' in model_name else 224
-    input_shape = (1, 3, img_size, img_size)
+    input_shape = (args.batch_size, 3, img_size, img_size)
     # symbol and params
     sym = path_sym_params + '/' + model_name + '-symbol.json'
     params = path_sym_params + '/' + model_name + '-0000.params'
@@ -76,7 +56,6 @@ def main():
     path_sym_params = './symbol_and_params'
     os.makedirs(path_onnx, exist_ok=True)
 
-    model_names = models
     #for model_name in model_names:
     #    print("model name : "+ model_name)
     #    mxnet2onnx(model_name, path_sym_params, path_onnx)
